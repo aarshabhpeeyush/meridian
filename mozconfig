@@ -1,0 +1,22 @@
+# Meridian: Firefox ESR built for Windows (x64) on a Linux computer in GitHub's cloud.
+ac_add_options --target=x86_64-pc-windows-msvc
+ac_add_options --enable-bootstrap
+
+ac_add_options --with-branding=browser/branding/meridian
+ac_add_options --with-app-name=meridian
+ac_add_options --with-app-basename=Meridian
+
+ac_add_options --enable-release
+ac_add_options --enable-optimize
+ac_add_options --disable-debug
+ac_add_options --disable-tests
+ac_add_options --disable-crashreporter
+ac_add_options --disable-maintenance-service
+# Stage 1 has no updater. Before any public release this must become signed MAR updates
+# (never unsigned: see Zen's CVE-2026-41431 in the research report).
+ac_add_options --disable-updater
+
+ac_add_options --with-ccache=sccache
+
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-meridian
+export MOZ_TELEMETRY_REPORTING=

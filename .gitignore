@@ -1,0 +1,5 @@
+# Local build output and Firefox source copies never go in the repo
+/src/
+/obj-*/
+__pycache__/
+*.pyc

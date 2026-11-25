@@ -1,0 +1,60 @@
+{
+  "manifest_version": 2,
+  "name": "Meridian Core",
+  "description": "Meridian's look, New Tab and settings. Built into Meridian.",
+  "version": "0.1.0",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "core@meridian.browser"
+    }
+  },
+  "icons": {
+    "48": "icons/meridian-48.png",
+    "128": "icons/meridian-128.png"
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "tabs",
+    "topSites",
+    "search",
+    "theme"
+  ],
+  "background": {
+    "scripts": [
+      "shared/themes.js",
+      "background.js"
+    ]
+  },
+  "options_ui": {
+    "page": "settings/index.html",
+    "open_in_tab": true
+  },
+  "commands": {
+    "open-settings": {
+      "suggested_key": {
+        "default": "Ctrl+Comma"
+      },
+      "description": "Open Meridian settings"
+    }
+  },
+  "experiment_apis": {
+    "meridian": {
+      "schema": "api/schema.json",
+      "parent": {
+        "scopes": [
+          "addon_parent"
+        ],
+        "script": "api/parent.js",
+        "events": [
+          "startup"
+        ],
+        "paths": [
+          [
+            "meridian"
+          ]
+        ]
+      }
+    }
+  }
+}

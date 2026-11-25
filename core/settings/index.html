@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Meridian settings</title>
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+<div class="set">
+  <nav aria-label="Settings sections">
+    <div class="h">Settings</div>
+    <div id="nav"></div>
+  </nav>
+  <main>
+    <label class="ssearch">
+      <svg class="ic sm" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5"/><path d="M13 13l3.5 3.5"/></svg>
+      <input id="q" placeholder="Search settings" autocomplete="off" spellcheck="false" aria-label="Search settings">
+    </label>
+    <div id="out"></div>
+  </main>
+</div>
+<input type="file" id="file" accept="image/*" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="../shared/look.js"></script>
+<script src="../shared/themes.js"></script>
+<script src="../shared/backdrops.js"></script>
+<script src="settings.js"></script>
+</body>
+</html>

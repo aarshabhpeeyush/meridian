@@ -1,0 +1,37 @@
+/* Meridian's frame shapes. Colours come from the theme (background.js); this file only changes
+   shapes, and only with selectors that have been stable across Firefox versions, so an ESR update
+   can't leave the window broken. Rules from UI-REFERENCE.md:
+   filled address bar with an 8px radius, flat grey-pill tabs, hairlines instead of shadows. */
+
+/* Address bar: a flat filled field, 8px corners, no border until it is focused */
+#urlbar-background {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+#urlbar:not([focused]) #urlbar-background {
+  border-color: transparent !important;
+  outline: none !important;
+}
+/* When it opens into the dropdown, the dropdown gets a soft menu shadow */
+#urlbar[open] > #urlbar-background {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Tabs: a flat pill for the selected tab, no shadows or outlines */
+.tabbrowser-tab .tab-background {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Toolbar: no shadow line on top; the hairline underneath comes from the theme */
+#nav-bar {
+  box-shadow: none !important;
+  border-top: none !important;
+}
+
+/* Less clutter: no Firefox account button, no "Extension (Meridian Core)" label in the address bar */
+#fxa-toolbar-menu-button,
+#identity-icon-label {
+  display: none !important;
+}

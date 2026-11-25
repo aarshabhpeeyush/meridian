@@ -1,0 +1,105 @@
+# Builds Meridian for Windows (x64) from Firefox ESR source, on GitHub's computers.
+# Start it from the Actions tab, or with: gh workflow run build.yml
+# It takes several hours the first time; later builds reuse compiled pieces (sccache).
+name: Build Meridian
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      MOZBUILD_STATE_PATH: /mnt/mozbuild
+      SCCACHE_GHA_ENABLED: "true"
+      SCCACHE_CACHE_SIZE: 9G
+      MOZ_PARALLEL_BUILD: 3
+      CARGO_BUILD_JOBS: 2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make room
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+
+      - name: Make more room
+        # Firefox needs about 40 GB of disk and lots of memory. These are tools the build never uses.
+        run: |
+          sudo rm -rf /usr/share/swift /usr/local/share/powershell /usr/local/share/chromium             /usr/local/lib/node_modules /opt/microsoft /opt/google /opt/az /usr/share/miniconda             /usr/local/julia* /usr/share/kotlinc /usr/local/aws-cli /usr/local/share/vcpkg || true
+          df -h /
+
+      - name: Workspace and swap on the big drive
+        run: |
+          sudo mkdir -p /mnt/meridian /mnt/mozbuild
+          sudo chown -R "$USER" /mnt/meridian /mnt/mozbuild
+          # Firefox's biggest compile steps need far more than the runner's 7.7 GB of memory.
+          # 8 GB of swap was too little (the runner froze); with only one disk, 16 GB is the most
+          # that still leaves the build enough space.
+          if mountpoint -q /mnt; then swap=24G; else swap=16G; fi
+          echo "Swap: $swap"
+          sudo fallocate -l "$swap" /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          df -h / /mnt
+          free -h
+
+      - name: Download Firefox ESR source
+        run: |
+          version=$(cat firefox-version.txt)
+          curl -fsSL "https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz" \
+            | tar -xJ -C /mnt/meridian
+          mv /mnt/meridian/firefox-* /mnt/meridian/src
+
+      - name: Turn it into Meridian
+        run: |
+          sudo apt-get install -y -q python3-pil
+          bash prepare.sh /mnt/meridian/src
+
+      - uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Get build tools
+        working-directory: /mnt/meridian/src
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q msitools libc6-i386 lib32gcc-s1 lib32stdc++6
+          ./mach --no-interactive bootstrap --application-choice browser
+          rustup target add x86_64-pc-windows-msvc
+          sudo apt-get clean
+          rm -rf ~/.cache/pip
+          df -h /mnt
+
+      - name: Build
+        working-directory: /mnt/meridian/src
+        # Lower priority, so GitHub's own runner program never gets starved and drops the job.
+        run: nice -n 10 ./mach build
+
+      - name: Package
+        working-directory: /mnt/meridian/src
+        run: |
+          sudo apt-get install -y -q p7zip-full
+          ./mach package
+          ls -la obj-meridian/dist/
+          mkdir -p /mnt/meridian/out
+          cp obj-meridian/dist/meridian-*.win64.zip /mnt/meridian/out/
+          cp obj-meridian/dist/install/sea/*.exe /mnt/meridian/out/ 2>/dev/null || true
+          sccache --show-stats || true
+
+      - name: Keep the finished browser
+        uses: actions/upload-artifact@v4
+        with:
+          name: meridian-win64
+          path: /mnt/meridian/out/*
+          retention-days: 14
+
+      - name: Keep the build log if something broke
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meridian-logs
+          path: |
+            /mnt/meridian/src/obj-meridian/config.log
+            /mnt/meridian/src/obj-meridian/.mozbuild/last_log.json
+          if-no-files-found: ignore

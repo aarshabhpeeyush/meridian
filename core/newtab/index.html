@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New Tab</title>
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+<main class="ntp" id="ntp">
+  <div class="box">
+    <div id="greet">
+      <div id="sun"></div>
+      <h1 id="hello"></h1>
+      <div class="sub" id="date"></div>
+    </div>
+    <form class="s" id="form" role="search">
+      <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5"/><path d="M13 13l3.5 3.5"/></svg>
+      <input id="q" type="text" placeholder="Search or type a URL" aria-label="Search or type a URL" autocomplete="off" spellcheck="false" autofocus>
+    </form>
+    <nav class="tiles" id="tiles" aria-label="Shortcuts"></nav>
+  </div>
+  <button class="bdbtn" id="bdbtn" title="Change backdrop" aria-label="Change backdrop" aria-haspopup="true" aria-expanded="false">
+    <svg class="ic" viewBox="0 0 20 20"><rect x="3.5" y="4.5" width="13" height="11" rx="2"/><path d="M3.5 13l3.5-3.5 3 3 2-2 4 4"/><circle cx="13" cy="8" r="1.2"/></svg>
+  </button>
+  <div class="pop" id="pop" role="dialog" aria-label="Backdrop" hidden>
+    <div class="head">Backdrop</div>
+    <div class="bdgrid" id="grid"></div>
+    <div class="sep"></div>
+    <button class="mi" id="upload">Upload an image…</button>
+    <button class="mi" id="clear" hidden>Remove your image</button>
+    <button class="mi" id="settings">Meridian settings<span class="k">Ctrl+,</span></button>
+  </div>
+  <input type="file" id="file" accept="image/*" hidden>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="../shared/look.js"></script>
+<script src="../shared/backdrops.js"></script>
+<script src="newtab.js"></script>
+</body>
+</html>

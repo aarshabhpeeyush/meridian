@@ -1,0 +1,20 @@
+/* Shared by Meridian's pages. Defaults are the Light look; look.js swaps in the live theme. */
+:root {
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --frame: #ffffff; --hair: #e3e3e3; --field: #f1f1f1; --hover: #f2f2f2; --active: #ebebeb; --press: #e2e2e2;
+  --text: #1f1f1f; --icon: #474747; --menu: #ffffff; --focus: #0b57d0;
+  --text-2: color-mix(in srgb, var(--text) 72%, var(--frame));
+  --text-3: color-mix(in srgb, var(--text) 52%, var(--frame));
+  --field-hover: color-mix(in srgb, var(--field) 85%, var(--text) 4%);
+  --menu-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  color-scheme: light;
+}
+:root[data-scheme="dark"] { color-scheme: dark; --menu-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.07); }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--frame); color: var(--text); font: 13px/1.4 var(--font); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: default; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+[hidden] { display: none !important; }
+.ic { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--icon); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ic.sm { width: 16px; height: 16px; }

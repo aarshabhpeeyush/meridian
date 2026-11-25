@@ -1,0 +1,39 @@
+[
+  {
+    "namespace": "meridian",
+    "description": "The few things Meridian Core needs that normal extensions can't do.",
+    "functions": [
+      {
+        "name": "getPref",
+        "type": "function",
+        "async": true,
+        "description": "Read one of the Firefox settings Meridian's own Settings page shows.",
+        "parameters": [{ "name": "name", "type": "string" }]
+      },
+      {
+        "name": "setPref",
+        "type": "function",
+        "async": true,
+        "description": "Change one of the Firefox settings Meridian's own Settings page shows.",
+        "parameters": [
+          { "name": "name", "type": "string" },
+          { "name": "value", "type": "any" }
+        ]
+      },
+      {
+        "name": "openFirefoxSettings",
+        "type": "function",
+        "async": true,
+        "description": "Open the full settings page (about:preferences), optionally at a section.",
+        "parameters": [{ "name": "pane", "type": "string", "optional": true }]
+      },
+      {
+        "name": "openImport",
+        "type": "function",
+        "async": true,
+        "description": "Open the import wizard (bookmarks, passwords and history from another browser).",
+        "parameters": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,1173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meridian</title>
+<style>
+/* Meridian v3 — follows UI-REFERENCE.md (Helium / Chrome / Firefox conventions)
+   Frame = page colour; hairlines only; filled fields; neutral grey; no accent in the frame. */
+:root{
+  --font:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  --frame:#ffffff; --page:#ffffff; --hair:#e3e3e3;
+  --field:#f1f1f1; --field-hover:#ebebeb;
+  --hover:#f2f2f2; --active:#ebebeb; --press:#e2e2e2;
+  --text:#1f1f1f; --text-2:#5e5e5e; --text-3:#8f8f8f; --icon:#474747;
+  --menu:#ffffff; --menu-shadow:0 4px 16px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.06);
+  --focus:#0b57d0;
+  --tab-h:32px; --bar-h:44px; --side-w:240px;
+  color-scheme:light;
+}
+:root[data-density="compact"]{--tab-h:28px;--bar-h:38px;--side-w:224px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --frame:#1f1f1f; --page:#1f1f1f; --hair:#333; --field:#2a2a2a; --field-hover:#323232;
+  --hover:#2a2a2a; --active:#333; --press:#3a3a3a; --text:#e8e8e8; --text-2:#b0b0b0; --text-3:#7c7c7c; --icon:#c7c7c7;
+  --menu:#2a2a2a; --menu-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.07); --focus:#a8c7fa; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --frame:#1f1f1f; --page:#1f1f1f; --hair:#333; --field:#2a2a2a; --field-hover:#323232;
+  --hover:#2a2a2a; --active:#333; --press:#3a3a3a; --text:#e8e8e8; --text-2:#b0b0b0; --text-3:#7c7c7c; --icon:#c7c7c7;
+  --menu:#2a2a2a; --menu-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.07); --focus:#a8c7fa; color-scheme:dark}
+/* Semi-dark: a softer mid-grey dark, lower contrast than Dark */
+:root[data-theme="dim"]{
+  --frame:#35363a; --page:#35363a; --hair:#47484d; --field:#404145; --field-hover:#48494e;
+  --hover:#3f4044; --active:#4a4b50; --press:#525358; --text:#e3e3e6; --text-2:#b4b5ba; --text-3:#8d8e94; --icon:#c9cacf;
+  --menu:#3d3e42; --menu-shadow:0 6px 20px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.06); --focus:#8ab4f8; color-scheme:dark}
+/* Eye comfort: deep blue-violet dark with softened, slightly warm text */
+:root[data-theme="eye"]{
+  --frame:#1c1b2e; --page:#1c1b2e; --hair:#2e2c47; --field:#26243d; --field-hover:#2d2b47;
+  --hover:#25233b; --active:#302e4c; --press:#383657; --text:#ddd9ec; --text-2:#a9a4c4; --text-3:#7a7598; --icon:#bdb8d8;
+  --menu:#24223a; --menu-shadow:0 6px 22px rgba(5,3,20,.6),0 0 0 1px rgba(180,170,255,.08); --focus:#a99cff; color-scheme:dark}
+/* Eye comfort also gently dims and warms web pages */
+:root[data-theme="eye"] .pane .view>.w,:root[data-theme="eye"] .glance .view>.w,:root[data-theme="eye"] .pane .view>.mail,:root[data-theme="eye"] .pane .view>.kb{filter:brightness(.88) sepia(.08)}
+:root[data-theme="dim"] .sw[aria-checked="true"]::after,:root[data-theme="eye"] .sw[aria-checked="true"]::after{background:#1c1b2e}
+:root[data-theme="dim"] .b2.fill,:root[data-theme="eye"] .b2.fill{color:#1c1b2e}
+/* Theme preview tiles in Settings */
+.themes{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px 16px}
+.th{display:flex;flex-direction:column;gap:6px;align-items:center;font-size:12px;color:var(--text-2)}
+.th .pv{width:100%;aspect-ratio:16/10;border-radius:8px;border:1px solid var(--hair);overflow:hidden;display:grid;grid-template-columns:28% 1fr;grid-template-rows:22% 1fr;background:var(--f)}
+.th .pv i{grid-column:2;margin:5px 6px 0 0;border-radius:4px;background:var(--fl)}
+.th .pv b{grid-column:2;margin:5px 6px 0 0;border-radius:6px 0 0 0;background:var(--pg);border:1px solid var(--hl);border-width:1px 0 0 1px}
+.th .pv s{grid-row:1/3;grid-column:1;margin:24% 6px 0 6px;height:8px;border-radius:3px;background:var(--fl)}
+.th.on .pv{outline:2px solid var(--focus);outline-offset:2px}
+.th.on{color:var(--text);font-weight:600}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--frame);color:var(--text);font:13px/1.35 var(--font);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:default}
+:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;border-radius:6px}
+.ic{width:20px;height:20px;flex:none;fill:none;stroke:var(--icon);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.ic.sm{width:16px;height:16px}
+
+/* ---------- Window grid ---------- */
+.win{position:fixed;inset:0;display:grid;grid-template-rows:var(--bar-h) 1fr}
+.win[data-layout="vertical"]{grid-template-columns:var(--side-w) 1fr}
+.win[data-layout="vertical"].collapsed{grid-template-columns:52px 1fr}
+.win[data-layout="horizontal"]{grid-template-columns:1fr;grid-template-rows:38px var(--bar-h) 1fr}
+
+/* ---------- Top bar ---------- */
+.lead{display:flex;align-items:center;gap:2px;padding:0 4px 0 8px;min-width:0}
+.bar{display:flex;align-items:center;gap:4px;min-width:0;padding-right:0}
+.win[data-layout="horizontal"] .lead{display:none}
+.win[data-layout="horizontal"] .bar{grid-column:1;padding-left:8px;border-bottom:1px solid var(--hair)}
+.win[data-layout="horizontal"] .bar .wc{display:none}
+.win.collapsed .lead .navgrp{display:none}
+.navgrp{display:flex;gap:2px}
+.win[data-layout="vertical"] .bar .navgrp{display:none}
+.win.collapsed .bar .navgrp{display:flex!important;margin-left:0}
+.btn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex:none;position:relative}
+.btn:hover{background:var(--hover)} .btn:active{background:var(--press)}
+.btn:disabled{opacity:.4;background:none}
+.btn.on{background:var(--active)}
+:root[data-density="compact"] .btn{width:28px;height:28px}
+
+.omni{flex:1;min-width:0;max-width:880px;margin:0 auto;position:relative}
+.field{height:32px;display:flex;align-items:center;gap:2px;background:var(--field);border-radius:8px;padding:0 4px;cursor:text}
+:root[data-density="compact"] .field{height:28px}
+.field:hover{background:var(--field-hover)}
+.field .btn{width:26px;height:24px;border-radius:6px}
+.field .btn:hover{background:var(--press)}
+.url{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;color:var(--text-3)}
+.url b{font-weight:400;color:var(--text)}
+.omni input{display:none;flex:1;min-width:0;border:0;outline:0;background:none;font:13px var(--font);color:var(--text);padding:0 4px}
+/* open state: the address bar grows into the dropdown (Chrome / Firefox / Helium pattern) */
+.omni.open .field{background:var(--menu);border-radius:8px 8px 0 0;box-shadow:var(--menu-shadow);position:relative;z-index:31}
+.omni.open .url{display:none} .omni.open input{display:block}
+.drop{display:none;position:absolute;left:0;right:0;top:32px;background:var(--menu);border-radius:0 0 8px 8px;box-shadow:var(--menu-shadow);z-index:30;padding:4px 0 6px;clip-path:inset(0 -24px -24px -24px)}
+:root[data-density="compact"] .drop{top:28px}
+.omni.open .drop{display:block}
+.drop .sep{height:1px;background:var(--hair);margin:4px 0}
+.row{display:flex;align-items:center;gap:12px;height:34px;padding:0 12px}
+.row.sel{background:var(--hover)}
+.row .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .h{color:var(--text-3)}
+.row .k{color:var(--text-3);font-size:12px}
+.row .tag{font-size:11px;color:var(--text-2);background:var(--field);border-radius:4px;padding:1px 6px}
+.dhead{font-size:11px;color:var(--text-3);padding:8px 12px 2px}
+
+.wc{display:flex;align-self:stretch;flex:none;margin-left:4px}
+.wc button{width:46px;display:grid;place-items:center}
+.wc button:hover{background:var(--hover)} .wc .x:hover{background:#c42b1c} .wc .x:hover svg{stroke:#fff}
+.wc svg{width:10px;height:10px;fill:none;stroke:var(--text);stroke-width:1}
+
+/* ---------- Sidebar ---------- */
+.side{grid-row:2;display:flex;flex-direction:column;min-height:0;padding:0 8px 8px}
+.win[data-layout="horizontal"] .side{display:none}
+.win.collapsed .side{padding:0 6px 8px}
+.pins{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:4px;padding:2px 0 8px}
+.pin{height:36px;border-radius:8px;display:grid;place-items:center;background:var(--field);position:relative}
+.pin:hover{background:var(--field-hover)} .pin.on{background:var(--active)}
+.pin .badge{position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#d93025;box-shadow:0 0 0 2px var(--field)}
+.win.collapsed .pins{grid-template-columns:1fr}
+.list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--active) transparent}
+.tab{height:var(--tab-h);display:flex;align-items:center;gap:10px;padding:0 4px 0 10px;border-radius:8px;position:relative;user-select:none}
+.tab:hover{background:var(--hover)}
+.tab.on{background:var(--active)}
+.tab .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab.zz .t{color:var(--text-3)} .tab.zz .fav{opacity:.5;filter:grayscale(1)}
+.tab .mini{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;flex:none}
+.tab .mini:hover{background:var(--press)}
+.tab .mini .ic{width:14px;height:14px}
+.tab:not(:hover):not(.on) .close{display:none}
+.win.collapsed .tab{justify-content:center;padding:0}
+.win.collapsed .tab .t,.win.collapsed .tab .mini{display:none}
+.fav{width:16px;height:16px;flex:none;border-radius:3px;object-fit:contain}
+.grp{margin-top:6px}
+.grp-h{width:100%;height:26px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:8px;color:var(--text-2);font-size:12px}
+.grp-h:hover{background:var(--hover)}
+.grp-h .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.grp-h .n{margin-left:auto;color:var(--text-3)}
+.grp-h .ic{width:14px;height:14px;transition:transform .12s}
+.grp.shut .grp-h .ic{transform:rotate(-90deg)} .grp.shut .grp-b{display:none}
+.grp-b{position:relative}
+.grp-b::before{content:"";position:absolute;left:4px;top:4px;bottom:4px;width:2px;border-radius:1px;background:var(--gc);opacity:.7}
+.win.collapsed .grp-h{justify-content:center;padding:0}.win.collapsed .grp-h :not(.dot){display:none}
+.win.collapsed .grp-b::before{left:0}
+.hr{height:1px;background:var(--hair);margin:8px 4px}
+.newtab{width:100%;height:var(--tab-h);display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:8px;color:var(--text-3)}
+.newtab:hover{background:var(--hover);color:var(--text-2)}
+.newtab .ic{width:16px;height:16px;stroke:var(--text-3)}
+.win.collapsed .newtab{justify-content:center;padding:0}.win.collapsed .newtab span{display:none}
+.foot{display:flex;align-items:center;gap:2px;padding-top:8px}
+.ctx{display:flex;gap:2px;flex:1}
+.ctx button{height:28px;min-width:28px;padding:0 8px;border-radius:8px;display:flex;align-items:center;gap:6px;color:var(--text-2)}
+.ctx button:hover{background:var(--hover)}
+.ctx button.on{background:var(--active);color:var(--text)}
+.ctx button i{width:8px;height:8px;border-radius:50%;flex:none}
+.ctx button:not(.on) span{display:none}
+.win.collapsed .foot,.win.collapsed .ctx{flex-direction:column}
+.win.collapsed .ctx button span{display:none}
+
+/* ---------- Horizontal tab strip (Chrome-style) ---------- */
+.strip{display:none;align-items:flex-end;min-width:0;background:var(--field);padding-left:8px}
+.win[data-layout="horizontal"] .strip{display:flex}
+.htabs{display:flex;align-items:flex-end;min-width:0;flex:1;overflow-x:auto;scrollbar-width:none;height:100%;padding-top:6px}
+.htabs .tab{flex:0 1 228px;min-width:100px;height:32px;border-radius:8px 8px 0 0;padding:0 4px 0 12px}
+.htabs .tab:hover{background:var(--hover)}
+.htabs .tab.on{background:var(--frame)}
+.htabs .tab:not(.on):not(:hover)+.tab:not(.on):not(:hover)::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:1px;background:var(--press)}
+.htabs .tab.p{flex:0 0 40px;min-width:40px;justify-content:center;padding:0}
+.htabs .gl{align-self:center;height:22px;padding:0 8px;border-radius:6px;font-size:12px;color:#fff;flex:none;margin:0 4px;display:flex;align-items:center}
+.strip .add{align-self:center}
+.strip .ctx{flex:none;align-self:center;margin-right:6px}
+
+/* ---------- Content ---------- */
+.content{grid-column:2;grid-row:2;min-height:0;display:flex;background:var(--page);border-top:1px solid var(--hair);border-left:1px solid var(--hair);border-top-left-radius:10px;overflow:hidden;position:relative}
+.win[data-layout="horizontal"] .content{grid-column:1;grid-row:3;border:0;border-radius:0}
+.pane{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff;color:#202124;position:relative}
+.split .pane+.pane{border-left:1px solid var(--hair)}
+.phead{display:none;height:28px;align-items:center;gap:8px;padding:0 4px 0 10px;border-bottom:1px solid var(--hair);background:var(--frame);color:var(--text-2);font-size:12px}
+.split .phead{display:flex}
+.split .pane.focus .phead{color:var(--text)}
+.split .pane.focus .phead::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--focus)}
+.phead .t{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.phead .btn{width:22px;height:22px;border-radius:5px}
+.phead .ic{width:14px;height:14px}
+.view{flex:1;overflow:auto;min-height:0}
+.status{position:absolute;left:6px;bottom:6px;max-width:60%;background:var(--menu);box-shadow:var(--menu-shadow);border-radius:6px;padding:3px 8px;font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:none;z-index:5}
+.status.show{display:block}
+
+/* ---------- Menus / dialogs ---------- */
+.veil{position:fixed;inset:0;z-index:20;display:none}.veil.show{display:block}
+.veil.dim{background:rgba(0,0,0,.3)}
+.menu{position:fixed;z-index:30;background:var(--menu);border-radius:8px;box-shadow:var(--menu-shadow);padding:6px 0;min-width:280px;display:none;color:var(--text)}
+.menu.show{display:block}
+.menu .mi{display:flex;align-items:center;gap:12px;width:100%;height:32px;padding:0 14px;text-align:left}
+.menu .mi:hover{background:var(--hover)}
+.menu .mi .g{flex:1}
+.menu .mi .k{color:var(--text-3);font-size:12px}
+.menu .mi.two{height:auto;padding:8px 14px}
+.menu .mi.two small{display:block;color:var(--text-2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu{max-width:420px}.menu .mi .g{min-width:0}.menu .dhead{padding:6px 14px 2px}
+.menu .sep{height:1px;background:var(--hair);margin:6px 0}
+.menu .head{padding:8px 14px 6px;font-weight:600}
+.menu .head small{display:block;font-weight:400;color:var(--text-2)}
+.menu .ck{width:16px}
+.sw{width:34px;height:18px;border-radius:9px;background:var(--press);position:relative;flex:none}
+.sw::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .12s}
+.sw[aria-checked="true"]{background:var(--focus)} .sw[aria-checked="true"]::after{transform:translateX(16px)}
+:root[data-theme="dark"] .sw[aria-checked="true"]::after{background:#062e6f}
+
+.glance{position:fixed;inset:56px 9% 28px;z-index:30;display:none;flex-direction:column;background:var(--menu);border-radius:10px;box-shadow:var(--menu-shadow);overflow:hidden}
+.glance.show{display:flex}
+.gbar{height:40px;display:flex;align-items:center;gap:4px;padding:0 6px 0 14px;border-bottom:1px solid var(--hair)}
+.gbar .u{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--text-2)}
+.pill{height:28px;padding:0 12px;border-radius:8px;background:var(--field)}
+.pill:hover{background:var(--field-hover)}
+.glance .view{background:#fff}
+
+.dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,92vw);background:var(--menu);border-radius:12px;box-shadow:var(--menu-shadow);z-index:40;padding:24px;display:none}
+.dialog.show{display:block}
+.dialog h2{font-size:18px;font-weight:600;margin:0 0 4px}
+.dialog p{color:var(--text-2);margin:0 0 16px}
+.choice{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:8px;text-align:left}
+.choice:hover{background:var(--hover)}
+.choice .r{width:18px;height:18px;border-radius:50%;border:2px solid var(--text-3);flex:none}
+.choice.on .r{border:5px solid var(--focus)}
+.choice small{display:block;color:var(--text-2)}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.b2{height:32px;padding:0 16px;border-radius:16px;border:1px solid var(--hair);color:var(--focus);font-weight:600}
+.b2:hover{background:var(--hover)}
+.b2.fill{background:var(--focus);border-color:var(--focus);color:#fff}
+:root[data-theme="dark"] .b2.fill{color:#062e6f}
+
+/* ---------- Built-in pages (settings / new tab) follow the frame theme ---------- */
+.ipage{background:var(--frame);color:var(--text);min-height:100%}
+.set{display:grid;grid-template-columns:220px 1fr;min-height:100%}
+.set nav{padding:16px 8px}
+.set nav .h{font-size:20px;padding:4px 12px 16px}
+.set nav a{display:flex;height:36px;align-items:center;padding:0 12px;border-radius:0 18px 18px 0;margin-left:-8px;padding-left:20px;color:var(--text)}
+.set nav a:hover{background:var(--hover)}
+.set nav a.on{background:var(--active);font-weight:600}
+.set main{padding:24px 32px 64px;max-width:720px}
+.set h3{font-size:15px;font-weight:600;margin:24px 0 10px}
+.set h3:first-child{margin-top:4px}
+.card{background:var(--page);border:1px solid var(--hair);border-radius:10px}
+.srow{display:flex;align-items:center;gap:16px;padding:12px 16px;min-height:56px}
+.srow+.srow{border-top:1px solid var(--hair)}
+.srow .g{flex:1}.srow small{display:block;color:var(--text-2);font-size:12px;margin-top:2px}
+.seg{display:inline-flex;border:1px solid var(--hair);border-radius:16px;overflow:hidden}
+.seg button{height:30px;padding:0 14px;color:var(--text-2)}
+.seg button+button{border-left:1px solid var(--hair)}
+.seg button.on{background:var(--active);color:var(--text);font-weight:600}
+select{font:13px var(--font);color:var(--text);background:var(--field);border:0;border-radius:8px;height:32px;padding:0 10px;min-width:150px}
+.dots{display:flex;gap:8px}
+.dots button{width:20px;height:20px;border-radius:50%}
+.dots button.on{box-shadow:0 0 0 2px var(--page),0 0 0 4px var(--text-2)}
+/* New tab: a little character. The sun arc is the signature ("meridian" = the sun's midday line). */
+.ntp{position:relative;height:100%;min-height:100%;overflow:hidden;display:flex;justify-content:center}
+
+.ntp .box{position:relative;width:min(600px,90%);padding-top:clamp(48px,20vh,200px);display:flex;flex-direction:column;align-items:center}
+.ntp .sun{width:200px;height:64px;overflow:visible;fill:none;stroke-linecap:round}
+.ntp .sun .trk{stroke:var(--text-3);stroke-width:1;stroke-dasharray:2 4;opacity:.7}
+.ntp .sun .done{stroke:var(--text-2);stroke-width:1.5}
+.ntp .sun .hz{stroke:var(--hair);stroke-width:1}
+.ntp .sun text{fill:var(--text-3);stroke:none;font:10px var(--font);letter-spacing:.06em}
+.ntp .sun .orb{fill:#f2a33a;stroke:var(--frame);stroke-width:3}
+.ntp .sun .moon{fill:none;stroke:var(--text-2);stroke-width:1.5}
+.ntp h1{font-size:30px;font-weight:600;letter-spacing:-.015em;margin:14px 0 4px;color:var(--text)}
+.ntp .sub{color:var(--text-2);font-size:13px;display:flex;align-items:center;gap:8px;margin-bottom:26px}
+.ntp .sub i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.ntp .s{width:100%;height:46px;border-radius:23px;background:var(--field);display:flex;align-items:center;gap:12px;padding:0 18px;color:var(--text-3);cursor:text}
+.ntp .s:hover{background:var(--field-hover)}
+.ntp .s kbd{margin-left:auto;font:11px var(--mono);color:var(--text-3);border:1px solid var(--hair);border-radius:5px;padding:2px 6px}
+.ntp .tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:22px;width:100%}
+.ntp .tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px;border-radius:10px;font-size:12px;color:var(--text-2)}
+.ntp .tile:hover{background:var(--hover)}
+.ntp .tile span.c{width:44px;height:44px;border-radius:50%;background:var(--field);display:grid;place-items:center;transition:transform .15s}
+.ntp .tile:hover span.c{transform:translateY(-2px)}
+.ntp .tile .fav{width:20px;height:20px}
+
+
+/* ---------- Mock website content (light, neutral, each its own "site") ---------- */
+.w{font:14px/1.55 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#1f2328;min-height:100%;background:#fff}
+.w a{color:#0969da;text-decoration:none;cursor:pointer}.w a:hover{text-decoration:underline}
+.w code{font:12.5px var(--mono);background:#f2f3f5;border-radius:4px;padding:1px 5px}
+.w pre{font:12.5px/1.5 var(--mono);background:#f6f8fa;border:1px solid #e4e7eb;border-radius:6px;padding:12px 14px;overflow:auto}
+.sh{height:56px;display:flex;align-items:center;gap:16px;padding:0 24px;border-bottom:1px solid #e5e7eb}
+.sh .n{font-weight:600}.sh .m{color:#6b7280;font-size:13px}.sh .sp{flex:1}
+.sh .q{width:240px;height:32px;border:1px solid #d0d7de;border-radius:6px;background:#f6f8fa;color:#8b949e;display:flex;align-items:center;padding:0 10px;font-size:13px}
+.art{display:grid;grid-template-columns:220px minmax(0,1fr);max-width:1080px;margin:0 auto}
+.art aside{padding:24px 12px;font-size:13px;color:#4b5563;border-right:1px solid #eef0f2}
+.art aside div{padding:5px 10px;border-radius:6px}.art aside .on{background:#eef4ff;color:#1d4ed8;font-weight:600}
+.art article{padding:28px 48px 80px;max-width:780px}
+.art h1{font-size:30px;line-height:1.2;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.art .meta{color:#6b7280;font-size:13px;margin-bottom:20px}
+.art h2{font-size:20px;font-weight:600;margin:30px 0 8px}
+.callout{border-left:3px solid #3b82f6;background:#f5f9ff;padding:10px 14px;border-radius:0 6px 6px 0;font-size:13.5px;margin:16px 0}
+.pr{padding:20px 32px 0;border-bottom:1px solid #d1d9e0}
+.pr h1{font-size:24px;font-weight:400;margin:0 0 8px}.pr h1 span{color:#59636e}
+.st{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:14px;background:#1f883d;color:#fff;font-size:13px;font-weight:600;margin-right:8px}
+.ptabs{display:flex;gap:24px;margin-top:14px;font-size:13px}.ptabs span{padding:8px 0;color:#59636e}.ptabs .on{color:#1f2328;font-weight:600;box-shadow:inset 0 -2px 0 #fd8c73}
+.file{margin:16px 32px;border:1px solid #d1d9e0;border-radius:6px;overflow:hidden}
+.fh{background:#f6f8fa;padding:8px 12px;font:12px var(--mono);border-bottom:1px solid #d1d9e0;display:flex;justify-content:space-between}
+.fh .c{color:#1a7f37}
+.diff{font:12px/20px var(--mono)}
+.diff div{display:flex;white-space:pre;min-height:20px}
+.diff i{font-style:normal;width:48px;text-align:right;padding-right:10px;color:#8c959f;flex:none}
+.diff .a{background:#e6ffec}.diff .a i{background:#ccffd8}.diff .d{background:#ffebe9}.diff .d i{background:#ffd7d5}.diff .hk{background:#ddf4ff;color:#59636e}
+.runs{width:100%;border-collapse:collapse;font-size:13px}.runs td{padding:10px 12px;border-bottom:1px solid #e5e7eb}.runs td:last-child{text-align:right;color:#6b7280;font:12px var(--mono)}
+.ok{color:#1a7f37}
+.mail{display:grid;grid-template-columns:200px 1fr;min-height:100%;font:13px/1.4 "Segoe UI",system-ui,sans-serif;background:#faf9f8}
+.mail aside{padding:12px 8px}.mail aside .nw{height:32px;border-radius:4px;background:#0f6cbd;color:#fff;display:grid;place-items:center;font-weight:600;margin:0 4px 12px}
+.mail aside div{display:flex;justify-content:space-between;padding:7px 12px;border-radius:4px;color:#242424}.mail aside .on{background:#e1dfdd;font-weight:600}
+.mail .lst{background:#fff;border-left:1px solid #edebe9}
+.mr{display:grid;grid-template-columns:190px 1fr 72px;gap:14px;padding:10px 16px;border-bottom:1px solid #f3f2f1;align-items:baseline}
+.mr.u{font-weight:600}.mr.u span:first-child{color:#0f6cbd}
+.mr .s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mr .s span{font-weight:400;color:#605e5c}
+.mr .tm{text-align:right;color:#605e5c;font-size:12px}
+.kb{display:flex;gap:16px;padding:16px 24px;align-items:flex-start;background:#fbfbfb;min-height:100%;font:13px/1.4 Inter,"Segoe UI",system-ui,sans-serif;color:#1b1b1b}
+.kc{width:260px;flex:none}.kc h4{font-size:13px;font-weight:600;margin:4px 6px 10px;display:flex;gap:8px;color:#3c3c3c}.kc h4 span{color:#8a8a8a;font-weight:400}
+.ki{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:10px 12px;margin-bottom:8px;box-shadow:0 1px 1px rgba(0,0,0,.03)}
+.ki .id{font-size:12px;color:#8a8a8a;margin-bottom:4px}.ki .l{display:inline-block;font-size:11px;color:#555;border:1px solid #e3e3e3;border-radius:10px;padding:0 7px;margin-top:8px}
+.asleep{display:grid;place-items:center;height:100%;color:#6b7280;text-align:center;font-size:13px}
+
+/* =====================================================================
+   v3.1 — ideas taken from the browser UI review (see UI-REFERENCE.md)
+   ===================================================================== */
+[hidden]{display:none!important}
+:root{--panel-w:320px;--toast-bg:#2b2b2b;--toast-fg:#f1f1f1;--toast-act:#a8c7fa}
+:root[data-theme="dark"],:root[data-theme="dim"],:root[data-theme="eye"]{--toast-bg:#e8e8e8;--toast-fg:#1f1f1f;--toast-act:#0b57d0}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){--toast-bg:#e8e8e8;--toast-fg:#1f1f1f;--toast-act:#0b57d0}}
+.foot .btn{width:28px;height:28px}
+.sv .n{margin-left:auto;font-size:12px}
+.win.collapsed .sv .n{display:none}
+.tab.gone{opacity:0;transform:translateX(-14px);transition:opacity .2s,transform .2s}
+
+/* Side panel — Vivaldi-style: web panels open inside the panel; Edge-style: every item removable */
+.win[data-layout="vertical"] .bar{grid-column:2/-1}
+.win[data-layout="horizontal"] .strip,.win[data-layout="horizontal"] .bar{grid-column:1/-1}
+.win.haspanel[data-layout="vertical"]{grid-template-columns:var(--side-w) 1fr var(--panel-w)}
+.win.haspanel[data-layout="vertical"].collapsed{grid-template-columns:52px 1fr var(--panel-w)}
+.win.haspanel[data-layout="horizontal"]{grid-template-columns:1fr var(--panel-w)}
+.spanel{display:none;flex-direction:column;min-height:0;min-width:0;background:var(--frame);border-top:1px solid var(--hair);border-left:1px solid var(--hair);grid-row:2;grid-column:3}
+.win[data-layout="horizontal"] .spanel{grid-row:3;grid-column:2;border-top:0}
+.win.haspanel .spanel{display:flex}
+.sph{display:flex;align-items:center;gap:2px;padding:6px;border-bottom:1px solid var(--hair)}
+.sph .btn{width:30px;height:30px}
+.sph .sp{flex:1}
+.spb{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:10px}
+.note .src span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spb.web{padding:0;background:#fff;color:#1f2328}
+.spb .art{grid-template-columns:1fr}.spb .art aside{display:none}.spb .art article{padding:16px}.spb .art h1{font-size:22px}
+.spbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 2px 10px;font-weight:600}
+.spbar .pill{font-weight:400;height:26px;font-size:12px}
+.empty{color:var(--text-2);font-size:12.5px;padding:12px 4px;line-height:1.5}
+.note{background:var(--page);border:1px solid var(--hair);border-radius:8px;padding:8px 10px;margin-bottom:8px;position:relative}
+.note q{display:block;quotes:none;border-left:2px solid var(--hair);padding-left:8px;margin:2px 0 6px;color:var(--text-2);font-size:12.5px}
+.note textarea{width:100%;border:0;background:none;color:var(--text);font:13px/1.45 var(--font);resize:vertical;outline:0;min-height:40px;padding:0}
+.note .src{font-size:11px;color:var(--text-3);display:flex;gap:6px;align-items:center;margin-top:4px}
+.note .src .fav{width:12px;height:12px}
+.note .mini{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:6px;display:none;place-items:center}
+.note:hover .mini{display:grid}.note .mini:hover{background:var(--hover)}.note .mini .ic{width:14px;height:14px}
+.pl{display:flex;align-items:center;gap:10px;width:100%;min-height:34px;padding:6px 8px;border-radius:8px;text-align:left}
+.pl:hover{background:var(--hover)}
+.pl .t{flex:1;min-width:0}.pl .t div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl small{color:var(--text-3);font-size:11.5px}
+.chat{padding:4px 12px 12px;font-size:13px}.chat h4{margin:8px 0;font-size:13px}
+.cm{padding:8px 2px;border-bottom:1px solid #eef0f2}.cm span{color:#6b7280;font-size:12px;margin-left:4px}
+:root[data-theme="eye"] .spb.web>.w{filter:brightness(.88) sepia(.08)}
+
+/* Focus mode — Orion/Zen: hide all UI, reveal it from the screen edge. Unlike Zen, it has a visible button. */
+.win.focus{grid-template-columns:0 1fr!important;grid-template-rows:0 1fr!important}
+.win.focus[data-layout="horizontal"]{grid-template-columns:1fr!important;grid-template-rows:0 0 1fr!important}
+.win.focus .spanel,.win.focus .lead{display:none!important}
+.win.focus .content{border:0;border-radius:0}
+.win.focus .bar,.win.focus .strip{position:fixed;left:0;right:0;z-index:16;background:var(--frame);transform:translateY(-110%);transition:transform .16s ease;box-shadow:0 1px 0 var(--hair),0 8px 18px rgba(0,0,0,.1)}
+.win.focus .bar{top:0;height:var(--bar-h);padding-left:8px}
+.win.focus .strip{top:0;height:38px}
+.win.focus[data-layout="horizontal"] .bar{top:38px}
+.win.focus .bar .navgrp{display:flex!important}
+.win.focus.pt .bar,.win.focus.pt .strip{transform:none}
+.win.focus .side{position:fixed;left:0;top:0;bottom:0;width:var(--side-w);z-index:15;background:var(--frame);padding-top:8px;transform:translateX(-105%);transition:transform .16s ease;box-shadow:1px 0 0 var(--hair),8px 0 18px rgba(0,0,0,.1)}
+.win.focus.collapsed .side{width:52px}
+.win.focus.pl .side{transform:none}
+.hot{position:fixed;z-index:14;display:none}
+.win.focus~.hot{display:block}
+#hotT{left:0;right:0;top:0;height:6px}#hotL{left:0;top:0;bottom:0;width:6px}
+
+/* Multi-row tabs (Floorp) for tabs on top */
+.win[data-layout="horizontal"][data-wrap="wrap"]{grid-template-rows:auto var(--bar-h) 1fr}
+.win[data-wrap="wrap"] .strip{align-items:flex-start;min-height:38px}
+.win[data-wrap="wrap"] .htabs{flex-wrap:wrap;height:auto;overflow:visible;padding:6px 0 4px;row-gap:3px}
+.win[data-wrap="wrap"] .htabs .tab{flex:1 1 170px;max-width:240px;height:30px;border-radius:8px}
+.win[data-wrap="wrap"] .strip>.btn,.win[data-wrap="wrap"] .strip>.ctx{align-self:flex-start;margin-top:4px}
+.win[data-wrap="wrap"] .strip .wc{align-self:flex-start;height:38px}
+
+/* Link hints — keyboard "follow mode" from Vieb / qutebrowser */
+.hint{position:fixed;z-index:50;background:#ffd84d;color:#1f1f1f;font:700 11px/1 var(--mono);padding:3px 4px;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.35);text-transform:uppercase;pointer-events:none}
+.hint .m{opacity:.35}
+
+/* Screenshot (Edge / Vivaldi) */
+.shot{position:fixed;z-index:45;display:none;cursor:crosshair;background:rgba(0,0,0,.28);overflow:hidden}
+.shot.show{display:block}.shot.drag{background:none}
+.shot .sel{position:absolute;outline:1px solid #fff;box-shadow:0 0 0 100vmax rgba(0,0,0,.28);display:none}
+.shbar{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;background:var(--menu);color:var(--text);border-radius:10px;box-shadow:var(--menu-shadow);padding:6px 6px 6px 14px;cursor:default;white-space:nowrap}
+.shbar span{color:var(--text-2);margin-right:6px}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,16px);opacity:0;pointer-events:none;z-index:60;background:var(--toast-bg);color:var(--toast-fg);border-radius:8px;padding:9px 14px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(0,0,0,.25);transition:opacity .16s,transform .16s;max-width:min(640px,92vw)}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{color:var(--toast-act);font-weight:600;padding:4px 8px;margin:-4px -6px -4px 0;border-radius:6px;flex:none}
+.toast button:hover{background:rgba(127,127,127,.18)}
+
+/* "Add to notes" chip on text selection (Beam / Arc Easel) */
+.clip{position:fixed;z-index:25;display:none;align-items:center;gap:6px;height:30px;padding:0 12px 0 8px;border-radius:8px;background:var(--menu);color:var(--text);box-shadow:var(--menu-shadow)}
+.clip.show{display:flex}.clip:hover{background:var(--hover)}.clip .ic{width:16px;height:16px}
+
+/* Dialog extras */
+.dialog.wide{width:min(620px,94vw)}
+.dialog .card{margin-bottom:4px}
+.dialog input.tx{width:100%;height:36px;border:0;border-radius:8px;background:var(--field);color:var(--text);font:13px var(--font);padding:0 12px;outline:0;margin-bottom:14px}
+.dialog input.tx:focus{box-shadow:0 0 0 2px var(--focus)}
+.steps{display:flex;gap:6px;margin-right:auto;align-items:center}
+.steps i{width:6px;height:6px;border-radius:50%;background:var(--press)}.steps i.on{background:var(--focus)}
+.setup .themes{padding:4px 0 8px}
+.tips{display:grid;gap:2px;margin:4px 0 14px}
+.tips div{display:flex;align-items:center;gap:14px;padding:8px 2px}
+.tips kbd,.kchip{font:12px var(--mono);background:var(--field);border-radius:6px;padding:4px 8px;color:var(--text);white-space:nowrap}
+.tips kbd{min-width:132px;text-align:center}
+.kchip{min-width:120px;height:28px}
+.kchip:hover{background:var(--field-hover)}.kchip.rec{outline:2px solid var(--focus);color:var(--text-2)}
+.kchip.none{color:var(--text-3)}
+.tm{width:100%;border-collapse:collapse}
+.tm td,.tm th{padding:7px 8px;text-align:left;border-bottom:1px solid var(--hair);font-size:12.5px;white-space:nowrap}
+.tm th{color:var(--text-3);font-weight:400;position:sticky;top:0;background:var(--menu)}
+.tm td.r,.tm th.r{text-align:right}.tm td:first-child{max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.tm .fav{vertical-align:-3px;margin-right:8px}
+.tm .pill{height:24px;font-size:12px;padding:0 10px}
+.tm .pill:disabled{opacity:.4}
+.btn.tw::after{content:"";position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--text-2)}
+
+/* Settings: search + real sections (Vivaldi-style categories, Chrome-style search) */
+.set nav a{cursor:default;user-select:none}
+.ssearch{display:flex;align-items:center;gap:10px;height:36px;border-radius:18px;background:var(--field);padding:0 14px;margin-bottom:8px;max-width:520px}
+.ssearch input{flex:1;min-width:0;border:0;outline:0;background:none;font:13px var(--font);color:var(--text)}
+.themes+.srow{border-top:1px solid var(--hair)}
+.srow .b2{flex:none}
+.srow .k{color:var(--text-3);font-size:12px}
+
+/* Per-site tweaks (Orion "Tweaks" / Arc "Boosts", kept simple) */
+.view[data-font="serif"] .w :not(code):not(pre){font-family:Georgia,"Times New Roman",serif!important}
+.view[data-font="sans"] .w :not(code):not(pre){font-family:system-ui,"Segoe UI",sans-serif!important}
+.view[data-dark="1"]>*{filter:invert(.9) hue-rotate(180deg)}
+.view[data-dark="1"] img{filter:invert(1) hue-rotate(180deg)}
+
+/* New tab backdrop. Each backdrop re-sets the colour tokens locally so text stays readable. */
+.ntp .globe{position:absolute;left:50%;bottom:-430px;width:1400px;height:860px;transform:translateX(-50%);pointer-events:none;fill:none;stroke:var(--text-3);stroke-width:1;opacity:.35;
+  -webkit-mask-image:linear-gradient(to top,#000 10%,transparent 75%);mask-image:linear-gradient(to top,#000 10%,transparent 75%)}
+.ntp.bd-light{--text:#1f1f1f;--text-2:#45474d;--text-3:#6b6e75;--field:rgba(255,255,255,.78);--field-hover:#fff;--hover:rgba(0,0,0,.06);--hair:rgba(0,0,0,.14);color:var(--text)}
+.ntp.bd-dark{--text:#fff;--text-2:rgba(255,255,255,.86);--text-3:rgba(255,255,255,.66);--field:rgba(255,255,255,.16);--field-hover:rgba(255,255,255,.24);--hover:rgba(255,255,255,.12);--hair:rgba(255,255,255,.3);--icon:#fff;color:var(--text)}
+.ntp.bd-dark h1{text-shadow:0 1px 14px rgba(0,0,0,.35)}
+.ntp.bd-light .sun .orb,.ntp.bd-dark .sun .orb{stroke:none}
+.ntp.bd-dark .ic{stroke:#fff}
+.ntp .bdbtn{position:absolute;right:14px;bottom:14px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--field)}
+.ntp .bdbtn:hover{background:var(--field-hover)}.ntp .bdbtn .ic{width:16px;height:16px}
+.bdgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:6px 14px 10px}
+.bdsw{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;color:var(--text-2)}
+.bdsw i{display:block;width:100%;aspect-ratio:16/10;border-radius:8px;border:1px solid var(--hair);background-size:cover;background-position:center}
+.bdsw:hover i{border-color:var(--text-3)}
+.bdsw.on{color:var(--text);font-weight:600}.bdsw.on i{outline:2px solid var(--focus);outline-offset:2px}
+.set .bdgrid{grid-template-columns:repeat(5,1fr);padding:2px 16px 14px}
+</style>
+</head>
+<body>
+<div class="win" id="win" data-layout="vertical">
+
+  <!-- top-left (over sidebar): toggle + navigation, like Helium vertical -->
+  <div class="lead">
+    <button class="btn" id="sideBtn" title="Hide sidebar (Ctrl+Shift+B)" aria-label="Toggle sidebar"><svg class="ic" viewBox="0 0 20 20"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M8 4v12"/></svg></button>
+    <div class="navgrp">
+      <button class="btn" aria-label="Back" title="Back"><svg class="ic" viewBox="0 0 20 20"><path d="M16 10H4.5M9 5l-5 5 5 5"/></svg></button>
+      <button class="btn" aria-label="Forward" disabled><svg class="ic" viewBox="0 0 20 20"><path d="M4 10h11.5M11 5l5 5-5 5"/></svg></button>
+      <button class="btn" aria-label="Reload" title="Reload (F5)"><svg class="ic" viewBox="0 0 20 20"><path d="M15.5 10a5.5 5.5 0 1 1-1.6-3.9M15.5 3.5v3h-3"/></svg></button>
+    </div>
+  </div>
+
+  <!-- horizontal tab strip -->
+  <div class="strip">
+    <div class="ctx" id="ctxH"></div>
+    <div class="htabs" id="htabs" role="tablist"></div>
+    <button class="btn add" id="addH" title="New tab (Ctrl+T)" aria-label="New tab"><svg class="ic" viewBox="0 0 20 20"><path d="M10 4.5v11M4.5 10h11"/></svg></button>
+    <button class="btn add" data-act="tabsearch" data-tip="Search tabs" data-key="tabsearch" aria-label="Search tabs"><svg class="ic" viewBox="0 0 20 20"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M7 9l3 3 3-3"/></svg></button>
+    <div style="width:40px;flex:none"></div>
+    <div class="wc"><button aria-label="Minimize"><svg viewBox="0 0 10 10"><path d="M0 5.5h10"/></svg></button><button aria-label="Maximize"><svg viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9"/></svg></button><button class="x" aria-label="Close"><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10"/></svg></button></div>
+  </div>
+
+  <!-- toolbar over the page column -->
+  <header class="bar">
+    <div class="navgrp">
+      <button class="btn" aria-label="Back" title="Back"><svg class="ic" viewBox="0 0 20 20"><path d="M16 10H4.5M9 5l-5 5 5 5"/></svg></button>
+      <button class="btn" aria-label="Forward" disabled><svg class="ic" viewBox="0 0 20 20"><path d="M4 10h11.5M11 5l5 5-5 5"/></svg></button>
+      <button class="btn" aria-label="Reload" title="Reload (F5)"><svg class="ic" viewBox="0 0 20 20"><path d="M15.5 10a5.5 5.5 0 1 1-1.6-3.9M15.5 3.5v3h-3"/></svg></button>
+    </div>
+    <div class="omni" id="omni">
+      <div class="field" id="field">
+        <button class="btn" id="infoBtn" title="View site information" aria-label="View site information"><svg class="ic sm" viewBox="0 0 16 16"><path d="M2.5 5h7M12.5 5h1M2.5 11h1M6.5 11h7"/><circle cx="11" cy="5" r="1.5"/><circle cx="5" cy="11" r="1.5"/></svg></button>
+        <div class="url" id="url"></div>
+        <input id="q" autocomplete="off" spellcheck="false" aria-label="Address and search bar">
+        <button class="btn" id="splitBtn" data-tb="split" data-tip="Split view" data-key="split" aria-label="Split view"><svg class="ic sm" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M8 3v10"/></svg></button>
+        <button class="btn" id="starBtn" data-tb="star" title="Bookmark this tab (Ctrl+D)" aria-label="Bookmark this tab"><svg class="ic sm" viewBox="0 0 16 16"><path d="M8 2.3l1.7 3.5 3.8.5-2.8 2.7.7 3.8L8 11l-3.4 1.8.7-3.8L2.5 6.3l3.8-.5z"/></svg></button>
+      </div>
+      <div class="drop" id="drop" role="listbox"></div>
+    </div>
+    <button class="btn" data-tb="ublock" title="uBlock Origin" aria-label="uBlock Origin"><img class="fav" src="https://icons.duckduckgo.com/ip3/ublockorigin.com.ico" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{innerHTML:SHIELD}))"></button>
+    <button class="btn" id="extBtn" data-tb="ext" title="Extensions" aria-label="Extensions"><svg class="ic" viewBox="0 0 20 20"><path d="M8 3.5h3v2a1.5 1.5 0 0 0 3 0v-2h2.5V8h-2a1.5 1.5 0 0 0 0 3h2v5.5H11v-2a1.5 1.5 0 0 0-3 0v2H3.5V11h2a1.5 1.5 0 0 0 0-3h-2V3.5z"/></svg></button>
+    <button class="btn" data-tb="tabsearch" data-act="tabsearch" data-tip="Search tabs" data-key="tabsearch" aria-label="Search tabs"><svg class="ic" viewBox="0 0 20 20"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M7 9l3 3 3-3"/></svg></button>
+    <button class="btn" data-tb="shot" data-act="shot" data-tip="Screenshot" data-key="shot" aria-label="Screenshot"><svg class="ic" viewBox="0 0 20 20"><path d="M4 7V5.5A1.5 1.5 0 0 1 5.5 4H7M13 4h1.5A1.5 1.5 0 0 1 16 5.5V7M16 13v1.5a1.5 1.5 0 0 1-1.5 1.5H13M7 16H5.5A1.5 1.5 0 0 1 4 14.5V13"/></svg></button>
+    <button class="btn" data-tb="forget" data-act="forget" data-tip="Forget" data-key="forget" aria-label="Forget"><svg class="ic" viewBox="0 0 20 20"><path d="M10 3.5c.6 2.8 4.5 4.3 4.5 8.2a4.5 4.5 0 0 1-9 0c0-1.9.9-3.2 2-4.2.1 1.4.9 2.4 1.9 2.6-.4-2.5.1-4.6.6-6.6z"/></svg></button>
+    <button class="btn" id="dlBtn" data-tb="dl" data-act="panel" data-p="downloads" title="Downloads (Ctrl+J)" aria-label="Downloads"><svg class="ic" viewBox="0 0 20 20"><path d="M10 3.5v9M6 9l4 4 4-4M4 16.5h12"/></svg></button>
+    <button class="btn" id="panelBtn" data-tb="panel" data-act="panel-toggle" data-tip="Side panel" data-key="panel" aria-label="Side panel"><svg class="ic" viewBox="0 0 20 20"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M12 4v12"/></svg></button>
+    <button class="btn" id="focusBtn" data-tb="focus" data-act="focus" data-tip="Focus mode" data-key="focus" aria-label="Focus mode"><svg class="ic" viewBox="0 0 20 20"><path d="M12 4h4v4M8 16H4v-4M16 4l-4.5 4.5M4 16l4.5-4.5"/></svg></button>
+    <button class="btn" id="menuBtn" title="Customize and control Meridian" aria-label="Menu"><svg class="ic" viewBox="0 0 20 20"><circle cx="10" cy="4.5" r=".9" fill="currentColor"/><circle cx="10" cy="10" r=".9" fill="currentColor"/><circle cx="10" cy="15.5" r=".9" fill="currentColor"/></svg></button>
+    <div class="wc"><button aria-label="Minimize"><svg viewBox="0 0 10 10"><path d="M0 5.5h10"/></svg></button><button aria-label="Maximize"><svg viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9"/></svg></button><button class="x" aria-label="Close"><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10"/></svg></button></div>
+  </header>
+
+  <!-- vertical sidebar -->
+  <nav class="side" aria-label="Tabs">
+    <div class="pins" id="pins"></div>
+    <div class="list" id="list" role="tablist" aria-orientation="vertical"></div>
+    <button class="newtab sv" id="savedBtn" data-act="saved" title="Saved groups and snoozed tabs"></button>
+    <div class="foot"><div class="ctx" id="ctxV"></div><button class="btn" data-act="tabsearch" data-tip="Search tabs" data-key="tabsearch" aria-label="Search tabs"><svg class="ic sm" viewBox="0 0 20 20"><circle cx="9" cy="9" r="5"/><path d="M13 13l3.5 3.5"/></svg></button></div>
+  </nav>
+
+  <main class="content" id="content"></main>
+  <aside class="spanel" id="spanel" aria-label="Side panel"></aside>
+</div>
+<div class="hot" id="hotT"></div><div class="hot" id="hotL"></div>
+<div class="shot" id="shot"><div class="sel"></div><div class="shbar"><span>Drag to select an area</span><button class="pill" data-act="shot-visible">Visible area</button><button class="pill" data-act="shot-full">Full page</button><button class="pill" data-act="shot-cancel">Cancel</button></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span></span><button data-act="toast-act"></button></div>
+<button class="clip" id="clip" data-act="clip"><svg class="ic" viewBox="0 0 20 20"><path d="M5.5 3.5h6l3 3v10h-9z"/><path d="M8 10h4.5M8 13h4.5"/></svg>Add to notes</button>
+
+<div class="veil" id="veil"></div>
+<div class="menu" id="menu" role="menu"></div>
+<div class="glance" id="glance" role="dialog" aria-label="Link preview">
+  <div class="gbar"><span class="u" id="gUrl"></span><button class="pill" id="gSplit">Open in split view</button><button class="pill" id="gTab">Open in new tab</button><button class="btn" id="gX" aria-label="Close preview" title="Close (Esc)"><svg class="ic" viewBox="0 0 20 20"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button></div>
+  <div class="view" id="gView"></div>
+</div>
+<input type="file" id="bdFile" accept="image/*" hidden>
+<div class="dialog" id="dlg" role="dialog" aria-modal="true"></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const store={get(k,d){try{const v=localStorage.getItem('meridian3.'+k);return v==null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem('meridian3.'+k,JSON.stringify(v))}catch{}}};
+const SV=(p,c='ic')=>`<svg class="${c}" viewBox="0 0 20 20">${p}</svg>`;
+const SHIELD=SV('<path d="M10 3l6 2.2v4.3c0 3.6-2.6 6-6 7.5-3.4-1.5-6-3.9-6-7.5V5.2z"/>');
+const IC={x:SV('<path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/>'),plus:SV('<path d="M10 4.5v11M4.5 10h11"/>'),chev:SV('<path d="M6 8l4 4 4-4"/>'),snd:SV('<path d="M4 8h2.5L10 5v10l-3.5-3H4zM13 7.5a3.5 3.5 0 0 1 0 5"/>'),
+  globe:SV('<circle cx="10" cy="10" r="6.5"/><path d="M3.5 10h13M10 3.5c2 2 2.8 4.2 2.8 6.5S12 14.5 10 16.5C8 14.5 7.2 12.3 7.2 10S8 5.5 10 3.5z"/>'),
+  search:SV('<circle cx="9" cy="9" r="5"/><path d="M13 13l3.5 3.5"/>'),cmd:SV('<path d="M5 6.5l3.5 3.5L5 13.5M10.5 14H15"/>'),check:SV('<path d="M4.5 10.5l3.5 3.5 7.5-8"/>'),clock:SV('<circle cx="10" cy="10" r="6.5"/><path d="M10 6.5V10l2.5 1.5"/>'),
+  gear:SV('<circle cx="10" cy="10" r="2.5"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2M5 5l1.4 1.4M13.6 13.6L15 15M5 15l1.4-1.4M13.6 6.4L15 5"/>'),
+  chevR:SV('<path d="M8 6l4 4-4 4"/>'),chevL:SV('<path d="M12 6l-4 4 4 4"/>'),note:SV('<path d="M5.5 3.5h6l3 3v10h-9z"/><path d="M8 10h4.5M8 13h4.5"/>'),
+  list:SV('<path d="M7 5.5h9M7 10h9M7 14.5h9M4 5.5h.5M4 10h.5M4 14.5h.5"/>'),dl:SV('<path d="M10 3.5v9M6 9l4 4 4-4M4 16.5h12"/>'),
+  saved:SV('<path d="M3.5 5.5h13v3h-13zM4.5 8.5v7h11v-7M8 11.5h4"/>'),trash:SV('<path d="M4.5 6h11M8 6V4.5h4V6M6 6l.7 9.5h6.6L14 6"/>'),
+  file:SV('<path d="M5.5 3.5h6l3 3v10h-9z"/><path d="M11.5 3.5v3h3"/>')};
+const favURL=h=>'https://icons.duckduckgo.com/ip3/'+h+'.ico';
+const fav=(t,cls='fav')=>t.icon?`<span class="${cls}" style="display:grid;place-items:center">${t.icon}</span>`:`<img class="${cls}" src="${favURL(t.fh||t.host)}" alt="" loading="lazy" onerror="this.outerHTML=IC.globe.replace('class=&quot;ic&quot;','class=&quot;ic sm&quot;')">`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- Model: Context = tab set + container (+ optional profile) ---------- */
+const contexts=[{id:'work',name:'Work',color:'#1a73e8',iso:'Container'},{id:'research',name:'Research',color:'#9334e6',iso:'Container'},{id:'personal',name:'Personal',color:'#188038',iso:'Container'},{id:'bank',name:'Banking',color:'#e37400',iso:'Separate profile'}];
+let uid=0;const T=(title,host,path,kind,x={})=>({id:++uid,title,host,path,kind,...x});
+const data={
+ work:{pins:[T('Mail — Outlook','outlook.office.com','/mail/inbox','mail',{badge:1}),T('Calendar','outlook.office.com','/calendar/view/week','doc',{fh:'calendar.google.com'}),T('Slack','app.slack.com','/client/T024/C09','doc',{fh:'slack.com',badge:1}),T('Linear','linear.app','/meridian/team/BRW/active','board')],
+  groups:[{name:'Release 2.4',color:'#1a73e8',open:true,tabs:[
+    T('Add context switcher to sidebar · Pull Request #482 · meridian-browser/meridian','github.com','/meridian-browser/meridian/pull/482/files','review'),
+    T('build-windows · meridian-browser/meridian@4f2c1e9','github.com','/meridian-browser/meridian/actions/runs/9183','ci'),
+    T('Release checklist 2.4','www.notion.so','/meridian/Release-checklist-2-4-8f1e','doc')]},
+   {name:'Engine',color:'#e37400',open:false,tabs:[
+    T('Tab unloading — Firefox Source Docs documentation','firefox-source-docs.mozilla.org','/browser/components/tabbrowser/docs/tab-unloading.html','doc'),
+    T('Enhanced Tracking Protection — Firefox Source Docs','firefox-source-docs.mozilla.org','/toolkit/components/antitracking/anti-tracking/etp-matrix/','doc')]}],
+  tabs:[T('Compact mode — Figma','www.figma.com','/design/7Hk2/Compact-mode?node-id=12-440','doc',{audio:true}),
+   T('prefers-reduced-motion - CSS | MDN','developer.mozilla.org','/en-US/docs/Web/CSS/@media/prefers-reduced-motion','doc'),
+   T('Speedometer 3.1','browserbench.org','/Speedometer3.1/','doc',{zz:true}),
+   T('Gecko (software) - Wikipedia','en.wikipedia.org','/wiki/Gecko_(software)','doc',{zz:true}),
+   T('Using the Web Animations API - Web APIs | MDN','developer.mozilla.org','/en-US/docs/Web/API/Web_Animations_API/Using_the_Web_Animations_API','doc'),
+   T('Servo (software) - Wikipedia','en.wikipedia.org','/wiki/Servo_(software)','doc')],
+  saved:[{name:'Q3 planning',color:'#9334e6',tabs:[T('Q3 roadmap','docs.google.com','/spreadsheets/d/1Q3rM/edit','doc'),T('OKR draft — Notion','www.notion.so','/meridian/OKRs-Q3-2b7c','doc'),T('Competitor notes: Zen, Floorp, Vivaldi — Notion','www.notion.so','/meridian/Competitors-91af','doc')]}],
+  snoozed:[{t:T('Firefox 162 release notes','www.firefox.com','/en-US/firefox/162.0/releasenotes/','doc'),until:'Tomorrow, 09:00'}]},
+ research:{pins:[T('Kagi Search','kagi.com','/','doc')],groups:[],tabs:[T('Arc is shutting down. Here is where its users are going','www.theverge.com','/2026/10/arc-browser-sunset','doc'),T('Workspaces | Zen Browser Docs','docs.zen-browser.app','/user-manual/workspaces','doc'),T('MPL 2.0 FAQ — Mozilla','www.mozilla.org','/en-US/MPL/2.0/FAQ/','doc'),T('Hacker News','news.ycombinator.com','/item?id=41822930','doc')]},
+ personal:{pins:[T('YouTube','www.youtube.com','/','doc'),T('Spotify','open.spotify.com','/','doc')],groups:[],tabs:[T('Servo wiring for a 6-DOF arm - Arduino Forum','forum.arduino.cc','/t/servo-wiring/1219921','doc'),T('10-day forecast','weather.com','/weather/tenday','doc')]},
+ bank:{pins:[],groups:[],tabs:[T('Accounts overview','www.example-bank.com','/personal/accounts','doc')]},
+};
+for(const c in data){data[c].saved=data[c].saved||[];data[c].snoozed=data[c].snoozed||[]}
+const BASE=uid; // tabs with a higher id were opened in this session (used by Forget)
+let S={ctx:store.get('ctx','work'),active:null,split:null,focus:0,collapsed:store.get('collapsed',false),panel:store.get('panel',null),setSec:'appearance',setQ:'',rec:null};
+const all=c=>{const d=data[c];return[...d.pins,...d.groups.flatMap(g=>g.tabs),...d.tabs]};
+const find=id=>{for(const c in data){const t=all(c).find(t=>t.id==id);if(t)return{t,c}}};
+const cur=()=>contexts.find(c=>c.id===S.ctx);
+const shown=()=>S.split?S.split[S.focus]:S.active;
+S.active=(data[S.ctx].groups[0]?.tabs[0]||all(S.ctx)[0]).id;
+
+/* ---------- Chrome ---------- */
+function tab(t){const on=t.id===S.active||(S.split||[]).includes(t.id);
+  return `<div class="tab${on?' on':''}${t.zz?' zz':''}" role="tab" tabindex="0" aria-selected="${on}" data-id="${t.id}" title="${esc(t.title)}${t.zz?'\nUnloaded to save memory':''}">${fav(t)}<span class="t">${esc(t.title)}</span>${t.audio?`<button class="mini" data-mute="${t.id}" title="Mute tab" aria-label="Mute tab">${IC.snd}</button>`:''}<button class="mini close" data-close="${t.id}" title="Close tab (Ctrl+W)" aria-label="Close tab">${IC.x}</button></div>`}
+function ctxButtons(){return contexts.map((c,i)=>`<button class="${c.id===S.ctx?'on':''}" data-ctx="${c.id}" title="${c.name} (Ctrl+${i+1})" aria-label="${c.name}"><i style="background:${c.color}"></i><span>${c.name}</span></button>`).join('')}
+function render(){
+  const d=data[S.ctx];
+  $('#pins').innerHTML=d.pins.map(t=>`<button class="pin${t.id===S.active?' on':''}" data-id="${t.id}" title="${esc(t.title)}" aria-label="${esc(t.title)}">${fav(t)}${t.badge?'<span class="badge"></span>':''}</button>`).join('');
+  $('#pins').style.display=d.pins.length?'':'none';
+  $('#list').innerHTML=d.groups.map((g,i)=>`<div class="grp${g.open?'':' shut'}" style="--gc:${g.color}"><button class="grp-h" data-group="${i}" aria-expanded="${g.open}"><i class="dot" style="background:${g.color}"></i><span>${g.name}</span>${IC.chev}<span class="n">${g.tabs.length}</span></button><div class="grp-b">${g.tabs.map(tab).join('')}</div></div>`).join('')
+    +(d.groups.length?'<div class="hr"></div>':'')+d.tabs.map(tab).join('')+`<button class="newtab" data-new="1">${IC.plus}<span>New tab</span></button>`;
+  $('#htabs').innerHTML=d.pins.map(t=>`<div class="tab p${t.id===S.active?' on':''}" data-id="${t.id}" title="${esc(t.title)}">${fav(t)}</div>`).join('')
+    +d.groups.map((g,i)=>`<button class="gl" data-group="${i}" style="background:${g.color}" title="${g.open?'Collapse':'Expand'} group">${g.name}</button>`+(g.open?g.tabs.map(tab).join(''):'')).join('')+d.tabs.map(tab).join('');
+  $('#ctxV').innerHTML=ctxButtons();$('#ctxH').innerHTML=ctxButtons();
+  $('#win').classList.toggle('collapsed',S.collapsed);
+  const ns=d.saved.length+d.snoozed.length;$('#savedBtn').hidden=!ns;$('#savedBtn').innerHTML=`${IC.saved}<span>Saved for later</span><span class="n">${ns}</span>`;
+  renderContent();renderUrl();renderPanel();
+}
+function renderUrl(){const r=find(shown());if(!r){$('#url').innerHTML='Search or type a URL';return}const t=r.t;
+  if(t.kind==='settings')$('#url').innerHTML=`<b>meridian://settings</b><span>/${S.setQ?'search':S.setSec}</span>`;
+  else if(t.kind==='new')$('#url').innerHTML='Search or type a URL';
+  else $('#url').innerHTML=`<b>${esc(t.host.replace(/^www\./,''))}</b>${store.get('fullurl',true)?esc(t.path):''}`;
+  $('#infoBtn').classList.toggle('tw',!!(t.host&&tweaks[t.host]));
+  $('#splitBtn').classList.toggle('on',!!S.split);document.title=t.title;}
+function viewAttrs(t){const w=t&&t.host&&tweaks[t.host];if(!w)return'';return ` data-font="${w.font||''}" data-dark="${w.dark?1:''}"${w.zoom&&w.zoom!==100?` style="zoom:${w.zoom/100}"`:''}`}
+function pane(id,i){const r=find(id),t=r&&r.t;
+  return `<section class="pane${S.split&&S.focus===i?' focus':''}" data-pane="${i}"><div class="phead">${t?fav(t):''}<span class="t">${t?esc(t.title):''}</span><button class="btn" data-unsplit="${i}" title="Close this side" aria-label="Close this side">${IC.x}</button></div><div class="view"${viewAttrs(t)}>${!t?'':t.zz?`<div class="asleep"><div>${esc(t.title)}<br>Unloaded to save memory. It reloads when you select it.</div></div>`:page(t)}</div></section>`}
+function renderContent(){const c=$('#content');c.classList.toggle('split',!!S.split);c.innerHTML=(S.split?pane(S.split[0],0)+pane(S.split[1],1):pane(S.active,0))+'<div class="status" id="status"></div>'}
+
+/* ---------- Mock pages ---------- */
+function page(t){switch(t.kind){
+ case 'mail':return `<div class="mail"><aside><div class="nw">New mail</div><div class="on">Inbox<span>4</span></div><div>Drafts<span>2</span></div><div>Sent items</div><div>Archive</div><div>Deleted items</div></aside><div class="lst">${[
+  ['Priya Raman','2.4 release go/no-go at 16:00','Agenda attached. Please look at the two open blockers before the meeting.','10:42',1],
+  ['GitHub','[meridian] build-windows passed on release/2.4','All 412 tests passed in 38m 12s. Artifacts are ready for signing.','10:15',1],
+  ['Mozilla Security','Security advisory MFSA 2026-58','Two high-impact fixes landed for Firefox 161 and ESR 153.5.','09:58',1],
+  ['Daniel Ortiz','Re: naming — "Context" vs "Space"','Agreed, "Context" reads better in the policy templates as well.','Yesterday',1],
+  ['Lena Hoffmann','Compact mode redlines','28 px rows, 52 px rail. The file is updated.','Yesterday',0],
+  ['IT Service Desk','Pilot rollout: 40 machines on Monday','ADMX templates are in the shared drive. Policy names match Firefox.','Mon',0],
+  ['Calendar','Weekly sync — Browser team','Thursday 11:00–11:30, Room 4B','Mon',0]].map(m=>`<div class="mr${m[4]?' u':''}"><span>${m[0]}</span><span class="s">${m[1]} <span>&nbsp;${m[2]}</span></span><span class="tm">${m[3]}</span></div>`).join('')}</div></div>`;
+ case 'review':return `<div class="w"><div class="pr"><h1>Add context switcher to sidebar <span>#482</span></h1><div><span class="st">Open</span><span style="color:#59636e;font-size:13px"><b style="color:#1f2328">meridian-dev</b> wants to merge 6 commits into <code>main</code> from <code>contexts-sidebar</code></span></div>
+  <div class="ptabs"><span>Conversation 4</span><span>Commits 6</span><span>Checks 3</span><span class="on">Files changed 3</span></div></div>
+  <div class="file"><div class="fh"><span>browser/modules/contexts/ContextSwitcher.sys.mjs</span><span class="c">+18 −4</span></div><div class="diff">${[
+  ['hk','','@@ -41,12 +41,26 @@ export class ContextSwitcher {'],['','41','  switchTo(contextId) {'],['d','42','-    this.#current = contextId;'],['a','42','+    if (contextId === this.#current) return;'],['a','43','+    const ctx = this.#store.get(contextId);'],['a','44','+    this.#hideTabsNotIn(ctx);'],['a','45','+    this.#current = contextId;'],['','46','    Services.obs.notifyObservers(null, "meridian-context-changed", contextId);'],['','47','  }'],['','48',''],['a','49','+  #hideTabsNotIn(ctx) {'],['a','50','+    for (const tab of gBrowser.tabs) {'],['a','51','+      const inCtx = tab.getAttribute("meridian-context") === ctx.id;'],['a','52','+      inCtx ? gBrowser.showTab(tab) : gBrowser.hideTab(tab);'],['a','53','+    }'],['a','54','+  }']].map(([c,n,s])=>`<div class="${c}"><i>${n}</i>${esc(s)}</div>`).join('')}</div></div>
+  <div class="file"><div class="fh"><span>browser/themes/shared/meridian/sidebar.css</span><span class="c">+2 −1</span></div><div class="diff"><div class="hk"><i></i>@@ -12,4 +12,5 @@</div><div><i>12</i>.meridian-sidebar {</div><div class="d"><i>13</i>-  --row-height: 36px;</div><div class="a"><i>13</i>+  --row-height: var(--tab-h, 32px);</div><div class="a"><i>14</i>+  --row-radius: 8px;</div><div><i>15</i>}</div></div></div></div>`;
+ case 'ci':return `<div class="w"><div class="pr" style="padding-bottom:16px"><h1>build-windows <span>#9183</span></h1><div style="color:#59636e;font-size:13px">Push to <code>release/2.4</code> · <span class="ok">Success</span> · 38m 12s</div></div><div style="padding:16px 32px;max-width:900px"><table class="runs">${[
+  ['Check out ESR 153.4.0 and apply patches','1m 04s'],['Restore sccache','0m 41s'],['mach build (clang-cl, LTO, PGO)','27m 50s'],['xpcshell and mochitest-browser (412 tests)','5m 31s'],['mach package','1m 12s'],['Sign installer and MAR with offline key','0m 39s'],['Upload artifacts','0m 26s']].map(r=>`<tr><td class="ok" style="width:28px">✓</td><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table></div></div>`;
+ case 'board':const col=(h,items)=>`<div class="kc"><h4>${h}<span>${items.length}</span></h4>${items.map(i=>`<div class="ki"><div class="id">${i[0]}</div>${i[1]}${i[2]?`<br><span class="l">${i[2]}</span>`:''}</div>`).join('')}</div>`;
+  return `<div class="kb">${col('Todo',[['BRW-311','Arc importer: spaces and pinned tabs','Feature'],['BRW-318','ADMX templates for the Contexts policy','Enterprise'],['BRW-322','Skeleton UI should match the vertical layout','']])}${col('In Progress',[['BRW-290','Timed tab unloading with a discardBrowser sweep','Feature'],['BRW-301','Context switcher in sidebar','Feature']])}${col('In Review',[['BRW-305','Compact density: 28 px rows','UI']])}${col('Done',[['BRW-270','Sign MARs with an offline key','Security'],['BRW-276','Publish outgoing connections list',''],['BRW-288','Rebase onto ESR 153.4','']])}</div>`;
+ case 'new':return newTabPage();
+ case 'settings':return settings();
+ default:{const title=t.title.split(/ [—|-] /)[0];return `<div class="w"><div class="art"><aside>${['Overview','Architecture','Tab unloading','Lazy browsers','Session restore','Process model','Preferences'].map((x,i)=>`<div class="${i===2?'on':''}">${i===2?x:`<a data-href="https://${esc(t.host)}/docs/${x.toLowerCase().replace(/ /g,'-')}" data-title="${x}">${x}</a>`}</div>`).join('')}</aside><article>
+  <h1>${esc(title)}</h1><div class="meta">${esc(t.host)} · Last updated 14 November 2026</div>
+  <p>When the system is low on memory, the browser can unload tabs that are not in use. An unloaded tab stays in the tab list and keeps its history, but the memory used by its content is released. The tab loads again when it is selected.</p>
+  <div class="callout">Tabs that are playing audio, using the camera or microphone, or shown in picture-in-picture are never unloaded.</div>
+  <h2>Choosing which tabs to unload</h2>
+  <p>Tabs are ordered by when they were last used. Pinned tabs are kept longer. When many tabs are open, tabs whose unloading would end a whole content process come first, because that frees the most memory. See <a data-href="https://firefox-source-docs.mozilla.org/browser/components/tabbrowser/docs/lazy-browsers.html" data-title="Lazy browsers">lazy browsers</a> and the <a data-href="https://browserbench.org/Speedometer3.1/" data-title="Speedometer 3.1">benchmark notes</a>.</p>
+  <pre>gBrowser.prepareDiscardBrowser(tab);
+gBrowser.discardBrowser(tab, /* forceDiscard */ false);</pre>
+  <h2>Preferences</h2><p><code>browser.tabs.unloadOnLowMemory</code> turns the feature on. <code>browser.tabs.min_inactive_duration_before_unload</code> sets how long a tab must be idle first.</p><p>Open <code>about:unloads</code> to see the current order or to unload a tab by hand.</p></article></div></div>`}}}
+const THEMES=[['system','Device','linear-gradient(135deg,#fff 50%,#1f1f1f 50%)','#9a9a9a','transparent','#9a9a9a'],['light','Light','#fff','#ececec','#fff','#e3e3e3'],['dim','Semi-dark','#35363a','#45464a','#35363a','#55565b'],['dark','Dark','#1f1f1f','#2e2e2e','#1f1f1f','#3a3a3a'],['eye','Eye comfort','#1c1b2e','#2b2944','#1c1b2e','#3a3758']];
+/* ---------- Settings: real sections + search (Vivaldi categories, Chrome search; not Opera's one long page) ---------- */
+const segH=(k,v,o)=>`<span class="seg" data-pref="${k}">${o.map(([a,l])=>`<button data-v="${a}" class="${a===v?'on':''}">${l}</button>`).join('')}</span>`;
+const swH=(k,on,label='')=>`<button class="sw" role="switch" aria-checked="${!!on}" data-sw="${k}" aria-label="${esc(label||k)}"></button>`;
+const themeTiles=th=>`<div class="themes">${THEMES.map(([v,l,f,fl,pg,hl])=>`<button class="th${v===th?' on':''}" data-theme-pick="${v}" aria-label="${l} theme" style="--f:${f};--fl:${fl};--pg:${pg};--hl:${hl}"><span class="pv"><s></s><i></i><b></b></span>${l}</button>`).join('')}</div>`;
+function SECS(){const lay=store.get('layout','vertical'),den=store.get('density','normal'),th=store.get('theme','system'),c=cur();
+ // row = [title, description, control, html shown under the row, extra search words]
+ return [
+ {id:'you',name:'You and Meridian',rows:[
+  ['Import bookmarks and settings','From Chrome, Edge, Firefox or Arc. Arc spaces become Contexts.',`<button class="b2" data-act="setup-import">Import</button>`,'','browser data passwords history'],
+  ['Run setup again','Theme, tab layout and import',`<button class="b2" data-act="setup">Start</button>`,'','onboarding welcome'],
+  ['Default browser','Meridian never asks on its own. Set it here when you are ready.',`<button class="b2" data-act="make-default">Make default</button>`]]},
+ {id:'appearance',name:'Appearance',rows:[
+  ['Theme','Device follows Windows light or dark.','',themeTiles(th),'dark light semi eye comfort colour color mode'],
+  ['Tabs','Side shows full titles. Top saves width.',segH('layout',lay,[['vertical','Side'],['horizontal','Top']]),'','vertical horizontal layout'],
+  ['When tabs fill the top row','Scroll keeps one row. Wrap adds more rows.',segH('tabwrap',store.get('tabwrap','scroll'),[['scroll','Scroll'],['wrap','Wrap']]),'','multi row multiple rows'],
+  ['Density','Compact fits more tabs on screen.',segH('density',den,[['normal','Normal'],['compact','Compact']]),'','size small'],
+  ['New tab backdrop','A colour, a gradient, or your own picture.',`<button class="b2" data-act="bd-upload">Upload image</button>`,bdGrid(),'background wallpaper image picture'],
+  ['Greeting on new tabs','Time of day, the sun’s path and your context.',swH('ntpgreet',store.get('ntpgreet',true),'Greeting on new tabs'),'','new tab page'],
+  ['Show full URLs','Show the whole address, not just the site.',swH('fullurl',store.get('fullurl',true),'Show full URLs'),'','address bar path']]},
+ {id:'toolbar',name:'Toolbar and side panel',rows:[
+  ...TB.map(([k,l,s])=>[l,s,swH('tb-'+k,tb[k],l),'','toolbar button customize hide show']),
+  ...panels.map(p=>[p.name,p.host?'Web panel · opens inside the side panel':'Side panel',`<button class="b2" data-act="panel-remove" data-p="${p.id}">Remove</button>`,'','side panel']),
+  ['Add a web panel','Keep a site such as chat or music open next to your tabs.',`<button class="b2" data-act="addpanel">Add</button>`,'','side panel web app']]},
+ {id:'contexts',name:'Contexts',rows:[
+  [`${c.name} colour`,'Used only for the dot next to the name.',`<span class="dots">${GCOL.map(x=>`<button class="${x===c.color?'on':''}" data-color="${x}" style="background:${x}" aria-label="${x}"></button>`).join('')}</span>`,'','workspace'],
+  ['Keep separate','A container separates cookies. A separate profile also separates history, passwords and extensions.',`<select><option ${c.iso==='Container'?'selected':''}>Container</option><option ${c.iso!=='Container'?'selected':''}>Separate profile</option></select>`,'','workspace profile container']]},
+ {id:'privacy',name:'Privacy and security',rows:[
+  ['Tracking protection','Strict also blocks fingerprinting. A few sites may break.',segH('etp',store.get('etp','strict'),[['standard','Standard'],['strict','Strict']]),'','trackers ads'],
+  ['Forget button','How much the Forget button deletes by default.',`<select><option>This site</option><option>Last 15 minutes</option><option>Last 2 hours</option></select>`,'','burn fire clear data'],
+  ['Sites that stay signed in','Forget leaves these alone.',`<span class="k">${keep.length?keep.map(esc).join(', '):'None yet. Turn it on in a site\'s info menu.'}</span>`,'','fireproof keep'],
+  ['AI features','Off. Nothing is sent to an AI service unless you turn this on.',swH('ai',store.get('ai',false),'AI features'),'','chatbot assistant'],
+  ['Send technical and usage data','',swH('telemetry',store.get('telemetry',false),'Usage data'),'','telemetry']]},
+ {id:'performance',name:'Performance',rows:[
+  ['Unload inactive tabs','Tabs playing media, in a call or in picture-in-picture are kept.',`<select><option>After 15 minutes</option><option>After 30 minutes</option><option selected>After 1 hour</option><option>After 2 hours</option><option>Never</option></select>`,'','sleep memory'],
+  ['Task manager','See how much memory each tab uses.',`<button class="b2" data-act="tasks">Open</button>`,'','memory cpu resources'],
+  ['Use graphics acceleration when available','',swH('gpu',true,'Graphics acceleration'),'','gpu']]},
+ {id:'shortcuts',name:'Keyboard shortcuts',rows:[
+  ...Object.keys(ACT).map(id=>[ACT[id][0],'',`<button class="kchip${keyOf(id)?'':' none'}" data-act="rec" data-k="${id}">${keyOf(id)||'Not set'}</button>`,'','shortcut key keyboard']),
+  ['Reset all shortcuts','',`<button class="b2" data-act="keys-reset">Reset</button>`,'','shortcut key keyboard']]},
+ {id:'search',name:'Search engine',rows:[
+  ['Search engine','Used in the address bar.',`<select><option>Kagi</option><option>DuckDuckGo</option><option>Google</option><option>Bing</option><option>Startpage</option><option>Ecosia</option></select>`],
+  ...BANGS.map(b=>['!'+b[0],`Search ${b[1]}. Type <b>!${b[0]} words</b> in the address bar.`,`<span class="k">${b[2]}</span>`,'','search shortcut bang keyword'])]},
+ {id:'downloads',name:'Downloads',rows:[
+  ['Location','Downloads',`<button class="b2">Change</button>`],
+  ['Ask where to save each file','',swH('askdl',store.get('askdl',false),'Ask where to save')]]},
+ {id:'about',name:'About Meridian',rows:[['Meridian 0.3 prototype','Based on Firefox ESR 153 · Up to date','']]}]}
+function settings(){const secs=SECS();
+ return `<div class="ipage set"><nav><div class="h">Settings</div>${secs.map(s=>`<a data-act="sec" data-s="${s.id}" class="${!S.setQ&&s.id===S.setSec?'on':''}">${s.name}</a>`).join('')}</nav><main>
+ <label class="ssearch">${IC.search}<input id="setQ" placeholder="Search settings" value="${esc(S.setQ)}" autocomplete="off" spellcheck="false"></label><div id="setRes">${setResults(secs)}</div></main></div>`}
+function setResults(secs=SECS()){const q=S.setQ.trim().toLowerCase();
+ const row=r=>`<div class="srow"><div class="g">${r[0]}${r[1]?`<small>${r[1]}</small>`:''}</div>${r[2]||''}</div>${r[3]||''}`;
+ if(!q){const s=secs.find(s=>s.id===S.setSec)||secs[0];return `<h3>${s.name}</h3><div class="card">${s.rows.map(row).join('')}</div>`}
+ const hits=secs.map(s=>({s,rows:s.rows.filter(r=>(s.name+' '+r[0]+' '+(r[1]||'')+' '+(r[4]||'')).replace(/<[^>]+>/g,'').toLowerCase().includes(q))})).filter(x=>x.rows.length);
+ return hits.length?hits.map(({s,rows})=>`<h3>${s.name}</h3><div class="card">${rows.map(row).join('')}</div>`).join(''):`<p style="color:var(--text-2);margin-top:24px">No settings match “${esc(S.setQ)}”.</p>`}
+function refreshSettings(){if(find(shown())?.t.kind==='settings'){const q=$('#setQ'),had=q&&document.activeElement===q;renderContent();renderUrl();if(had){const n=$('#setQ');n.focus();n.setSelectionRange(n.value.length,n.value.length)}}}
+
+/* ---------- Actions ---------- */
+function activate(id){const r=find(id);if(!r)return;S.ctx=r.c;r.t.zz=false;if(S.split)S.split[S.focus]=+id;else S.active=+id;render()}
+function switchCtx(id){S.ctx=id;store.set('ctx',id);S.split=null;S.active=(data[id].groups[0]?.tabs[0]||all(id)[0])?.id;fixActive();render()}
+const closed=[];
+const tabArrays=c=>{const d=data[c];return[d.pins,d.tabs,...d.groups.map(g=>g.tabs)]};
+function detach(t){for(const c in data)for(const a of tabArrays(c)){const i=a.indexOf(t);if(i>-1){a.splice(i,1);data[c].groups=data[c].groups.filter(g=>g.tabs.length);return{c,a,i}}}return{}}
+function fixActive(){const ids=all(S.ctx).map(t=>t.id);if(S.split&&!S.split.every(i=>ids.includes(i)))S.split=null;
+  if(!ids.includes(S.active)){if(!ids.length){const t=T('New tab','','','new',{icon:IC.plus});data[S.ctx].tabs.push(t);ids.push(t.id)}S.active=ids.at(-1)}}
+function closeTab(id){const r=find(id);if(!r)return;const p=detach(r.t);closed.push({t:r.t,...p});fixActive();render()}
+function reopen(){const c=closed.pop();if(!c)return;if(c.a)c.a.splice(c.i,0,c.t);if(!find(c.t.id))data[c.c||S.ctx].tabs.push(c.t);activate(c.t.id)}
+function open(t){data[S.ctx].tabs.push(t);S.split=null;S.active=t.id;render();return t}
+function newTab(){open(T('New tab','','','new',{icon:IC.plus}));openOmni()}
+function openSettings(sec){if(typeof sec==='string'){S.setSec=sec;S.setQ=''}const e=all(S.ctx).find(t=>t.kind==='settings');e?activate(e.id):open(T('Settings','','','settings',{icon:IC.gear}))}
+function toggleSplit(){if(S.split){S.active=S.split[S.focus];S.split=null;render();return}const o=all(S.ctx).find(t=>t.id!==S.active&&!t.zz&&t.kind!=='new');if(o){S.split=[S.active,o.id];S.focus=0;render()}}
+function toggleSidebar(){S.collapsed=!S.collapsed;store.set('collapsed',S.collapsed);render()}
+function unloadOthers(){all(S.ctx).forEach(t=>{if(t.id!==S.active&&!(S.split||[]).includes(t.id)&&!t.audio&&!['settings','new'].includes(t.kind))t.zz=true});render()}
+function moveTabTo(id,to,follow){const r=find(id);if(!r)return;detach(r.t);data[to].tabs.push(r.t);const name=contexts.find(c=>c.id===to).name;
+  if(follow){S.ctx=to;store.set('ctx',to);S.active=r.t.id;S.split=null}else fixActive();render();
+  if(!follow)toast(`Moved to ${name}`,'Go there',()=>activate(r.t.id))}
+const moveTab=to=>moveTabTo(S.active,to,true);
+function setPref(k,v){
+  if(k.startsWith('tw-')){const t=find(shown())?.t;if(!t||!t.host)return;const w=tweaks[t.host]=tweaks[t.host]||{};w[k.slice(3)]=k==='tw-zoom'?+v:v;saveTweaks();renderContent();renderUrl()}
+  else{store.set(k,v);const R=document.documentElement;
+    if(k==='layout')$('#win').dataset.layout=v;if(k==='density')R.dataset.density=v;if(k==='tabwrap')$('#win').dataset.wrap=v;
+    if(k==='theme'){v==='system'?delete R.dataset.theme:R.dataset.theme=v;$$('[data-theme-pick]').forEach(b=>b.classList.toggle('on',b.dataset.themePick===v))}}
+  $$(`.seg[data-pref="${k}"] button`).forEach(b=>b.classList.toggle('on',b.dataset.v===String(v)))}
+function onSwitch(k,v){
+  if(k.startsWith('tb-')){tb[k.slice(3)]=v;store.set('tb',tb);applyToolbar();return}
+  if(k.startsWith('tw-')){setPref(k,v);return}
+  if(k==='keep'){const h=find(shown()).t.host;keep=v?[...new Set([...keep,h])]:keep.filter(x=>x!==h);store.set('keep',keep);return}
+  if(k==='def'){setupData.def=v;return}
+  if(k==='ai'&&v)toast('The full build would ask which AI provider to use first. Nothing is sent in this prototype.');
+  store.set(k,v);if(k==='fullurl')renderUrl()}
+
+/* ---------- Toolbar: every button optional (Chrome / Firefox / Safari). No duplicates (Floorp's mistake). ---------- */
+const TB=[['split','Split view button','In the address bar'],['star','Bookmark star','In the address bar'],['ublock','Pinned extension icons',''],['ext','Extensions menu',''],['tabsearch','Search tabs',''],['shot','Screenshot',''],['forget','Forget','Deletes recent browsing in one click'],['dl','Downloads',''],['panel','Side panel',''],['focus','Focus mode','Hides everything except the page']];
+const TB_DEF={split:0,star:1,ublock:1,ext:1,tabsearch:0,shot:0,forget:0,dl:1,panel:1,focus:0};
+let tb={...TB_DEF,...store.get('tb',{})};
+function applyToolbar(){$$('[data-tb]').forEach(b=>b.hidden=!tb[b.dataset.tb]);$$('[data-tip]').forEach(b=>{const k=keyOf(b.dataset.key);b.title=b.dataset.tip+(k?` (${k})`:'')})}
+
+/* ---------- Keyboard shortcuts: one table drives everything, all rebindable (Floorp / Vivaldi) ---------- */
+const ACT={
+ palette:['Search tabs, commands and the web','Ctrl+K',()=>openOmni()],
+ newtab:['New tab','Ctrl+T',newTab],
+ close:['Close tab','Ctrl+W',()=>closeTab(shown())],
+ reopen:['Reopen closed tab','Ctrl+Shift+T',reopen],
+ tabsearch:['Search tabs','Ctrl+Shift+A',()=>openOmni('@')],
+ sidebar:['Show or hide the sidebar','Ctrl+Shift+B',toggleSidebar],
+ split:['Split view','Ctrl+Alt+S',toggleSplit],
+ focus:['Focus mode','Ctrl+Shift+F',()=>toggleFocus()],
+ panel:['Side panel','Ctrl+Shift+E',()=>togglePanel()],
+ notes:['Notes','Ctrl+Shift+M',()=>togglePanel('notes',true)],
+ hints:['Follow a link with the keyboard','Ctrl+Shift+Space',()=>startHints()],
+ shot:['Screenshot','Ctrl+Shift+S',()=>startShot()],
+ forget:['Forget…','',()=>forgetDialog()],
+ saved:['Saved groups and snoozed tabs','',()=>savedMenu()],
+ tidy:['Group tabs by site','',()=>tidyTabs()],
+ tasks:['Task manager','Shift+Esc',()=>taskManager()],
+ tweaks:['Customize this site…','',()=>tweakDialog()],
+ toolbar:['Customize toolbar','',()=>openSettings('toolbar')],
+ settings:['Settings','Ctrl+,',()=>openSettings()],
+};
+const defKeys=()=>Object.fromEntries(Object.keys(ACT).map(k=>[k,ACT[k][1]]));
+let KEYS={...defKeys(),...store.get('keys',{})};
+const keyOf=id=>KEYS[id]||'';
+function combo(e){if(['Control','Shift','Alt','Meta'].includes(e.key))return null;const c=e.code||'';
+  let k=c.startsWith('Key')?c.slice(3):c.startsWith('Digit')?c.slice(5):({Comma:',',Period:'.',Slash:'/',Semicolon:';',Quote:"'",BracketLeft:'[',BracketRight:']',Backquote:'`',Minus:'-',Equal:'=',Escape:'Esc',Space:'Space',Backslash:'\\'})[c]||e.key;
+  if(k.length===1)k=k.toUpperCase();return(e.ctrlKey?'Ctrl+':'')+(e.altKey?'Alt+':'')+(e.shiftKey?'Shift+':'')+k}
+function recKey(e){e.preventDefault();e.stopPropagation();const id=S.rec;
+  if(e.key==='Escape'&&!e.shiftKey&&!e.ctrlKey&&!e.altKey){S.rec=null;refreshSettings();return}
+  if((e.key==='Backspace'||e.key==='Delete')&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){setKey(id,'');return}
+  const c=combo(e);if(!c)return;
+  if(!/Ctrl\+|Alt\+/.test(c)&&!/^(Shift\+)?(F\d+|Esc)$/.test(c)){toast('Use Ctrl or Alt with a key, or a function key such as F6');return}
+  setKey(id,c)}
+function setKey(id,c){const other=c&&Object.keys(KEYS).find(k=>k!==id&&KEYS[k]===c);if(other)KEYS[other]='';KEYS[id]=c;S.rec=null;
+  const def=defKeys(),diff={};for(const k in KEYS)if(KEYS[k]!==def[k])diff[k]=KEYS[k];store.set('keys',diff);applyToolbar();refreshSettings();
+  toast(other?`${c} now does “${ACT[id][0]}”. “${ACT[other][0]}” has no shortcut now.`:c?`${ACT[id][0]}: ${c}`:`${ACT[id][0]} has no shortcut`)}
+
+/* ---------- Address bar = command palette. @ tabs, > commands, ! site search (Min) ---------- */
+const BANGS=[['w','Wikipedia','en.wikipedia.org','/w/index.php?search='],['gh','GitHub','github.com','/search?q='],['mdn','MDN','developer.mozilla.org','/en-US/search?q='],['yt','YouTube','www.youtube.com','/results?search_query='],['bz','Bugzilla','bugzilla.mozilla.org','/buglist.cgi?quicksearch=']];
+const cmds=[...Object.keys(ACT).filter(id=>id!=='palette').map(id=>({t:ACT[id][0],id,run:ACT[id][2]})),
+ ...[['Unload other tabs','',unloadOthers],['Tabs on the side','',()=>setPref('layout','vertical')],['Tabs on top','',()=>setPref('layout','horizontal')],['Compact density','',()=>setPref('density','compact')],['Normal density','',()=>setPref('density','normal')],['Theme: Light','',()=>setPref('theme','light')],['Theme: Semi-dark','',()=>setPref('theme','dim')],['Theme: Dark','',()=>setPref('theme','dark')],['Theme: Eye comfort','',()=>setPref('theme','eye')],['Theme: Device','',()=>setPref('theme','system')],
+ ['Translate page','',()=>{}],['Reader view','F9',()=>{}],['Copy clean link','Ctrl+Shift+C',()=>{}],['Clear browsing data','Ctrl+Shift+Del',()=>{}],['Developer tools','F12',()=>{}]].map(([t,k,run])=>({t,k,run})),
+ ...contexts.map((c,i)=>({t:'Switch to '+c.name,k:'Ctrl+'+(i+1),run:()=>switchCtx(c.id)})),...contexts.map(c=>({t:'Move tab to '+c.name,run:()=>moveTab(c.id)}))];
+const kOf=c=>c.id?keyOf(c.id):c.k||'';
+function score(q,s){const l=s.toLowerCase(),i=l.indexOf(q);if(i<0)return -1;return 100-i+((i===0||/\W/.test(l[i-1]))?40:0)}
+let sel=0,items=[];
+const tabRow=(t,cx,s)=>({html:`${esc(t.title)} <span class="h">— ${esc(t.host.replace(/^www\./,''))}</span>`,icon:fav(t),tag:'Switch to tab'+(cx!==S.ctx?' · '+contexts.find(c=>c.id===cx).name:''),score:s+(cx===S.ctx?5:0),run:()=>activate(t.id)});
+function renderDrop(){let raw=$('#q').value.trim(),mode='';if(/^[@>!]/.test(raw)){mode=raw[0];raw=raw.slice(1).trim()}const q=raw.toLowerCase();const out=[];
+  const tabsM=()=>contexts.forEach(cx=>all(cx.id).forEach(t=>{if(t.kind==='new'||!t.host)return;const s=q?Math.max(score(q,t.title),score(q,t.host)):50;if(s>=0)out.push(tabRow(t,cx.id,s))}));
+  const cmdsM=()=>cmds.forEach(c=>{const s=q?score(q,c.t.toLowerCase()):10;if(s>=0)out.push({html:esc(c.t),icon:IC.cmd,k:kOf(c),score:s-1,run:c.run})});
+  if(mode==='@'){tabsM();out.sort((a,b)=>b.score-a.score);out.forEach(r=>r.sec=q?'':'All tabs')}
+  else if(mode==='>'){cmdsM();if(q)out.sort((a,b)=>b.score-a.score)}
+  else if(mode==='!'){const[b='',...rest]=raw.split(/\s+/);const term=rest.join(' ');
+    BANGS.filter(x=>x[0].startsWith(b.toLowerCase())).forEach(x=>out.push({html:term?`Search ${x[1]} for “${esc(term)}”`:`!${x[0]} <span class="h">— Search ${x[1]}</span>`,icon:fav({host:x[2]}),tag:x[2],
+      run:()=>{if(!term){openOmni('!'+x[0]+' ');return}open(T(`${term} - Search - ${x[1]}`,x[2],x[3]+encodeURIComponent(term),'doc'))}}))}
+  else if(q){out.push({kind:'search',html:`${esc(q)} <span class="h">— Search with Kagi</span>`,icon:IC.search,score:1e3,run:()=>{}});tabsM();cmdsM();out.sort((a,b)=>b.score-a.score)}
+  else{all(S.ctx).filter(t=>!['new','settings'].includes(t.kind)).slice(0,5).forEach(t=>out.push({...tabRow(t,S.ctx,0),sec:'Open tabs'}));
+    ['New tab','Split view','Reopen closed tab','Settings'].forEach(n=>{const c=cmds.find(x=>x.t===n);out.push({html:esc(c.t),icon:IC.cmd,k:kOf(c),run:c.run,sec:'Actions'})})}
+  items=out.slice(0,mode==='@'?12:10);sel=Math.max(0,Math.min(sel,items.length-1));let h='',last='';
+  items.forEach((r,i)=>{if(r.sec&&r.sec!==last){h+=(last?'<div class="sep"></div>':'')+`<div class="dhead">${r.sec}</div>`;last=r.sec}h+=`<div class="row${i===sel?' sel':''}" role="option" aria-selected="${i===sel}" data-i="${i}">${r.icon}<span class="t">${r.html}</span>${r.tag?`<span class="tag">${r.tag}</span>`:''}${r.k?`<span class="k">${r.k}</span>`:''}</div>`});
+  if(!items.length)h=`<div class="dhead" style="padding:10px 12px">No matches</div>`;
+  if(!q&&!mode)h+=`<div class="sep"></div><div class="dhead" style="padding-bottom:6px">Type <b>@</b> to search tabs, <b>&gt;</b> for commands, <b>!</b> to search a site</div>`;
+  $('#drop').innerHTML=h}
+function openOmni(prefix){closeAll();const w=$('#win');if(w.classList.contains('focus'))w.classList.add('pt');const r=find(shown());$('#omni').classList.add('open');$('#veil').className='veil show';const q=$('#q');sel=0;
+  if(typeof prefix==='string'){q.value=prefix;renderDrop();q.focus();q.setSelectionRange(q.value.length,q.value.length);return}
+  q.value=r&&r.t.host&&!['new','settings'].includes(r.t.kind)?'https://'+r.t.host+r.t.path:'';renderDropBlank();q.focus();q.select()}
+function renderDropBlank(){const q=$('#q');const keep=q.value;q.value='';renderDrop();q.value=keep}
+
+/* ---------- Toast ---------- */
+let toastT,toastFn;
+function toast(msg,act,fn){const t=$('#toast');t.querySelector('span').textContent=msg;const b=t.querySelector('button');b.hidden=!act;b.textContent=act||'';toastFn=fn||null;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(hideToast,act?6500:4000)}
+function hideToast(){$('#toast').classList.remove('show')}
+
+/* ---------- Menus and dialogs ---------- */
+let lastAnchor=null,lastRight=false;
+function closeAll(){$('#omni').classList.remove('open');['#menu','#glance','#dlg'].forEach(s=>$(s).classList.remove('show'));$('#veil').className='veil';
+  const w=$('#win');if(w.classList.contains('focus')&&!w.querySelector('.bar:hover,.strip:hover,.side:hover'))w.classList.remove('pt','pl')}
+function showMenu(html,anchor,right){closeAll();const m=$('#menu');m.innerHTML=html;m.classList.add('show');$('#veil').className='veil show';
+  const pt=!anchor.getBoundingClientRect,a=pt?{left:anchor.x,right:anchor.x,top:anchor.y,bottom:anchor.y}:anchor.getBoundingClientRect();
+  let x=right?a.right-m.offsetWidth:a.left;x=Math.max(6,Math.min(x,innerWidth-m.offsetWidth-6));let y=a.bottom+(pt?2:6);if(y+m.offsetHeight>innerHeight-6)y=Math.max(6,a.top-m.offsetHeight-(pt?0:6));
+  m.style.left=x+'px';m.style.top=y+'px';lastAnchor=anchor;lastRight=right}
+function showDialog(html,cls=''){closeAll();const d=$('#dlg');d.className='dialog show '+cls;d.innerHTML=html;$('#veil').className='veil show dim';const f=d.querySelector('input.tx');if(f)setTimeout(()=>{f.focus();f.select()},0)}
+const mi=(t,k='',attr='')=>`<button class="mi" ${attr}><span class="g">${t}</span><span class="k">${k}</span></button>`;
+const sm=s=>s.replace('class="ic"','class="ic sm"');
+const back=(label,act)=>`<button class="mi" data-act="${act}"><span class="ck">${sm(IC.chevL)}</span><span class="g"><b>${label}</b></span></button><div class="sep"></div>`;
+const subI=(t,act,attr='')=>`<button class="mi" data-act="${act}" ${attr}><span class="g">${t}</span><span class="k">${sm(IC.chevR)}</span></button>`;
+const dotI=c=>`<span class="ck"><i style="display:block;width:8px;height:8px;border-radius:50%;background:${c};margin:auto"></i></span>`;
+const SEP='<div class="sep"></div>';
+function mainMenu(sub){
+  if(sub==='more'){showMenu(back('More tools','menu-main')+mi('Saved groups and snoozed tabs',keyOf('saved'),'data-act="saved"')+mi('Notes',keyOf('notes'),'data-act="notes"')+mi('Forget…',keyOf('forget'),'data-act="forget"')+mi('Screenshot',keyOf('shot'),'data-act="shot"')+mi('Focus mode',keyOf('focus'),'data-act="focus"')+SEP+mi('Task manager',keyOf('tasks'),'data-act="tasks"')+mi('Group tabs by site',keyOf('tidy'),'data-act="tidy"')+mi('Customize toolbar…','','data-act="toolbar"')+mi('Customize this site…',keyOf('tweaks'),'data-act="tweaks"')+mi('Keyboard shortcuts','','data-act="sec-open" data-s="shortcuts"')+mi('Follow a link with the keyboard',keyOf('hints'),'data-act="hints"')+mi('Developer tools','F12'),$('#menuBtn'),true);return}
+  showMenu(mi('New tab',keyOf('newtab'),'data-new="1"')+mi('New window','Ctrl+N')+mi('New private window','Ctrl+Shift+N')+SEP
+   +mi('Passwords and autofill')+mi('History','Ctrl+H','data-act="panel" data-p="history" data-force="1"')+mi('Downloads','Ctrl+J','data-act="panel" data-p="downloads" data-force="1"')+mi('Bookmarks and lists','Ctrl+Shift+O')+mi('Extensions')+mi('Delete browsing data…','Ctrl+Shift+Del')+SEP
+   +`<div class="mi"><span class="g">Zoom</span><span class="k">−&nbsp;&nbsp;&nbsp;100%&nbsp;&nbsp;&nbsp;+</span></div>`+mi('Print…','Ctrl+P')+mi('Find and edit','Ctrl+F')+subI('More tools','menu-more')+SEP
+   +mi('Help')+mi('Settings',keyOf('settings'),'data-settings="1"')+mi('Exit'),$('#menuBtn'),true)}
+function infoMenu(){const t=find(shown())?.t;if(!t)return;const h=t.host;showMenu(`<div class="head">${esc(h||'Meridian')}<small>Connection is secure</small></div>${SEP}
+ <div class="mi two"><span class="g">Tracking protection<small>14 trackers blocked on this site</small></span><button class="sw" role="switch" aria-checked="true" aria-label="Tracking protection"></button></div>
+ <div class="mi two"><span class="g">Keep loaded<small>Never unload this site when inactive</small></span><button class="sw" role="switch" aria-checked="false" aria-label="Keep loaded"></button></div>
+ ${h?`<div class="mi two"><span class="g">Stay signed in<small>Forget won't sign you out of this site</small></span>${swH('keep',keep.includes(h),'Stay signed in')}</div>`:''}${SEP}
+ ${h?mi('Customize this site…','','data-act="tweaks"')+mi('Forget this site…','','data-act="forget"'):''}${mi('Cookies and site data')}${mi('Site settings')}`,$('#infoBtn'))}
+function ctxMenu(anchor){showMenu(contexts.map((c,i)=>`<button class="mi" data-ctx="${c.id}"><span class="ck">${c.id===S.ctx?sm(IC.check):''}</span><i style="width:8px;height:8px;border-radius:50%;background:${c.color};flex:none"></i><span class="g">${c.name}</span><span class="k">${all(c.id).length} tabs · Ctrl+${i+1}</span></button>`).join('')+SEP+mi('New context…')+mi('Manage contexts','','data-act="sec-open" data-s="contexts"'),anchor)}
+
+/* Tab right-click: groups, split, pin, snooze (SigmaOS), move to context */
+let menuTab=null,menuPt=null,menuG=null;
+const GCOL=['#1a73e8','#e37400','#188038','#9334e6','#d93025','#12b5cb','#5f6368'];
+const SNOOZE=[['Later today','in 3 hours','Today, 17:30'],['This evening','18:00','Today, 18:00'],['Tomorrow','09:00','Tomorrow, 09:00'],['Next week','Mon 09:00','Monday, 09:00']];
+function tabMenu(id,pt,sub){const r=find(id);if(!r)return;menuTab=id;if(pt)menuPt=pt;const t=r.t,d=data[S.ctx];const inG=d.groups.find(g=>g.tabs.includes(t)),pinned=d.pins.includes(t);let h;
+  if(sub==='group')h=back('Add to group','tab-sub')+mi('New group…','','data-act="tab-group-new"')+d.groups.filter(g=>g!==inG).map(g=>`<button class="mi" data-act="tab-group" data-g="${d.groups.indexOf(g)}">${dotI(g.color)}<span class="g">${esc(g.name)}</span><span class="k">${g.tabs.length}</span></button>`).join('');
+  else if(sub==='snooze')h=back('Snooze until','tab-sub')+SNOOZE.map((s,i)=>mi(s[0],s[1],`data-act="tab-snooze" data-s="${i}"`)).join('')+SEP+`<div class="head" style="font-weight:400;font-size:12px;color:var(--text-2)">The tab leaves the list and comes back on time.</div>`;
+  else if(sub==='move')h=back('Move to context','tab-sub')+contexts.filter(c=>c.id!==S.ctx).map(c=>`<button class="mi" data-act="tab-move" data-c="${c.id}">${dotI(c.color)}<span class="g">${c.name}</span><span class="k">${c.iso}</span></button>`).join('');
+  else h=(pinned?'':(inG?mi('Remove from group','','data-act="tab-ungroup"'):'')+subI('Add to group','tab-sub','data-sub="group"'))
+    +(id!==shown()?mi('Open in split view','','data-act="tab-split"'):'')+mi(pinned?'Unpin':'Pin','','data-act="tab-pin"')
+    +subI('Snooze','tab-sub','data-sub="snooze"')+subI('Move to context','tab-sub','data-sub="move"')+mi('Duplicate','','data-act="tab-dup"')+SEP
+    +(!t.zz&&id!==shown()&&!t.audio?mi('Unload tab','','data-act="tab-unload"'):'')+mi('Close tab',keyOf('close'),'data-act="tab-close"')+mi('Close other tabs','','data-act="tab-close-others"');
+  showMenu(h,menuPt)}
+function groupMenu(gi,pt){const g=data[S.ctx].groups[gi];if(!g)return;menuG=gi;if(pt)menuPt=pt;
+  showMenu(`<div class="head">${esc(g.name)}<small>${g.tabs.length} tab${g.tabs.length===1?'':'s'}</small></div>${SEP}`+mi('New tab in group','','data-act="g-newtab"')+mi('Rename…','','data-act="g-rename"')
+   +`<div class="mi"><span class="g">Colour</span><span class="dots">${GCOL.map(c=>`<button data-act="g-color" data-c="${c}" class="${c===g.color?'on':''}" style="background:${c};width:16px;height:16px" aria-label="${c}"></button>`).join('')}</span></div>`+SEP
+   +mi('Save and close group','','data-act="g-save"')+mi('Ungroup','','data-act="g-ungroup"')+mi('Close group','','data-act="g-close"'),menuPt)}
+/* Saved groups (Edge Collections / Opera Pinboards) + snoozed tabs */
+function savedMenu(){const d=data[S.ctx];let h=`<div class="head">Saved for later<small>${cur().name}</small></div>${SEP}`;
+  if(!d.saved.length&&!d.snoozed.length)h+=`<div class="head" style="font-weight:400;color:var(--text-2);max-width:300px">Nothing here yet. Right-click a group to save it for later, or right-click a tab to snooze it.</div>`;
+  if(d.saved.length)h+=`<div class="dhead">Saved groups</div>`+d.saved.map((g,i)=>`<button class="mi two" data-act="restore" data-i="${i}">${dotI(g.color)}<span class="g">${esc(g.name)}<small>${g.tabs.length} tabs · ${g.tabs.map(t=>esc(t.title.split(/ [—|-] /)[0])).join(', ')}</small></span><span class="k">Open</span></button>`).join('');
+  if(d.snoozed.length)h+=(d.saved.length?SEP:'')+`<div class="dhead">Snoozed tabs</div>`+d.snoozed.map((s,i)=>`<button class="mi two" data-act="wake" data-i="${i}"><span class="ck">${fav(s.t)}</span><span class="g">${esc(s.t.title)}<small>Back ${esc(s.until)}</small></span><span class="k">Open now</span></button>`).join('');
+  const b=$('#savedBtn');const vis=!b.hidden&&b.offsetParent&&!$('#win').classList.contains('focus');showMenu(h,vis?b:$('#menuBtn'),!vis)}
+let nameCb=null,pickC=null;
+function askName(title,val,color,cb){nameCb=cb;pickC=color;showDialog(`<h2 style="margin-bottom:14px">${title}</h2><input class="tx" id="nameIn" value="${esc(val)}" placeholder="Name" maxlength="40" aria-label="Name">
+  <div class="dots">${GCOL.map(c=>`<button data-act="pick-color" data-c="${c}" class="${c===color?'on':''}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div>
+  <div class="actions"><button class="b2" data-act="dlg-close">Cancel</button><button class="b2 fill" data-act="name-ok">Save</button></div>`)}
+function tidyTabs(){const d=data[S.ctx],by={};closeAll();
+  d.tabs.forEach(t=>{if(!t.host||['new','settings'].includes(t.kind))return;const h=t.host.replace(/^www\./,'');(by[h]=by[h]||[]).push(t)});
+  const NAMES={'developer.mozilla.org':'MDN','github.com':'GitHub','firefox-source-docs.mozilla.org':'Firefox docs','en.wikipedia.org':'Wikipedia','notion.so':'Notion'};let n=0;
+  for(const h in by)if(by[h].length>1){const tabs=by[h];d.tabs=d.tabs.filter(t=>!tabs.includes(t));d.groups.push({name:NAMES[h]||h.split('.').slice(-2)[0].replace(/^./,c=>c.toUpperCase()),color:GCOL[d.groups.length%GCOL.length],open:true,tabs});n++}
+  render();toast(n?`Made ${n} group${n>1?'s':''} from tabs on the same site`:'No two loose tabs are on the same site, so nothing changed')}
+
+/* Forget (DuckDuckGo's Fire button, without the flames) */
+let keep=store.get('keep',[]);
+function forgetDialog(){const t=find(shown())?.t;const h=t&&t.host?t.host:null,kept=h&&keep.includes(h);
+  const n=h?contexts.reduce((s,c)=>s+all(c.id).filter(x=>x.host===h).length,0):0;
+  showDialog(`<h2>Forget</h2><p>Deletes cookies, cache and history, and closes the matching tabs. Sites you stay signed in to are left alone.</p>
+  ${h&&!kept?`<button class="choice on" data-fg="site"><span class="r"></span><span><b>This site</b><small>${esc(h.replace(/^www\./,''))} · closes ${n} tab${n===1?'':'s'}</small></span></button>`:''}
+  <button class="choice${h&&!kept?'':' on'}" data-fg="15"><span class="r"></span><span><b>Last 15 minutes</b><small>Closes tabs opened in that time</small></span></button>
+  <button class="choice" data-fg="120"><span class="r"></span><span><b>Last 2 hours</b><small>Closes tabs opened in that time</small></span></button>
+  <div class="actions"><button class="b2" data-act="dlg-close">Cancel</button><button class="b2 fill" data-act="forget-go">Forget</button></div>`)}
+function forgetGo(){const ch=$('#dlg .choice.on')?.dataset.fg,t=find(shown())?.t;closeAll();const v=[];
+  for(const c in data)all(c).forEach(x=>{if(ch==='site'?x.host===t.host:(x.id>BASE&&x.host&&!keep.includes(x.host)))v.push(x)});
+  v.forEach(x=>$$(`.tab[data-id="${x.id}"],.pin[data-id="${x.id}"]`).forEach(e=>e.classList.add('gone')));
+  const n=v.length,tabs=`${n} tab${n===1?'':'s'}`;
+  setTimeout(()=>{v.forEach(x=>detach(x));fixActive();render();toast(ch==='site'?`Forgot ${t.host.replace(/^www\./,'')}. ${tabs} closed.`:`Deleted the last ${ch==='15'?'15 minutes':'2 hours'} of browsing${n?` and closed ${tabs}`:''}.`)},v.length?220:0)}
+
+/* Per-site tweaks (Orion Tweaks / Arc Boosts) */
+let tweaks=store.get('tweaks',{});
+function saveTweaks(){for(const h in tweaks){const w=tweaks[h];if((!w.zoom||w.zoom===100)&&(!w.font||w.font==='site')&&!w.dark&&!w.clean)delete tweaks[h]}store.set('tweaks',tweaks)}
+function tweakDialog(){const t=find(shown())?.t;if(!t||!t.host){closeAll();toast('Open a website to customize it');return}const w=tweaks[t.host]||{};
+  showDialog(`<h2>Customize ${esc(t.host.replace(/^www\./,''))}</h2><p>Changes apply only to this site and stay on this device.</p><div class="card">
+  <div class="srow"><div class="g">Zoom</div>${segH('tw-zoom',String(w.zoom||100),[['90','90%'],['100','100%'],['110','110%'],['125','125%']])}</div>
+  <div class="srow"><div class="g">Font<small>Use your own font for easier reading</small></div>${segH('tw-font',w.font||'site',[['site','Site'],['sans','Sans'],['serif','Serif']])}</div>
+  <div class="srow"><div class="g">Dark page<small>Darken this site even if it has no dark mode</small></div>${swH('tw-dark',w.dark,'Dark page')}</div>
+  <div class="srow"><div class="g">Hide cookie banners and pop-ups</div>${swH('tw-clean',w.clean,'Hide banners')}</div></div>
+  <div class="actions"><button class="b2" data-act="tw-reset">Reset</button><button class="b2 fill" data-act="dlg-close">Done</button></div>`)}
+
+/* Task manager (Opera's resource view, Chrome's Shift+Esc) */
+function mem(t){if(t.zz)return 0;let h=7;for(const ch of t.title)h=(h*31+ch.charCodeAt(0))%9973;return 48+h%300+(t.kind==='mail'?210:0)+(t.audio?90:0)}
+function taskManager(){const rows=contexts.flatMap(c=>all(c.id).map(t=>({t,c}))).sort((a,b)=>mem(b.t)-mem(a.t));const tot=rows.reduce((s,r)=>s+mem(r.t),0),live=[shown(),...(S.split||[])];
+  showDialog(`<h2>Task manager</h2><p>Memory used by each tab. Unloading frees it, and the tab keeps its place.</p><div style="max-height:50vh;overflow:auto;border:1px solid var(--hair);border-radius:8px"><table class="tm"><thead><tr><th>Tab</th><th>Context</th><th class="r">Memory</th><th class="r">CPU</th><th></th></tr></thead><tbody>${rows.map(({t,c})=>{const m=mem(t);
+   return `<tr><td title="${esc(t.title)}">${fav(t)}${esc(t.title)}</td><td>${c.name}</td><td class="r">${m?m+' MB':'Unloaded'}</td><td class="r">${t.zz?'—':t.audio?'3.8%':((m%23)/10).toFixed(1)+'%'}</td><td class="r"><button class="pill" data-act="tm-unload" data-t="${t.id}" ${t.zz||live.includes(t.id)||t.audio||['settings','new'].includes(t.kind)?'disabled':''}>Unload</button></td></tr>`}).join('')}</tbody></table></div>
+  <div class="actions"><span style="margin-right:auto;align-self:center;color:var(--text-2)">${tot.toLocaleString()} MB in use</span><button class="b2" data-act="tm-unload-all">Unload inactive tabs</button><button class="b2 fill" data-act="dlg-close">Done</button></div>`,'wide')}
+
+/* ---------- Focus mode ---------- */
+function toggleFocus(){const w=$('#win'),on=!w.classList.contains('focus');closeAll();w.classList.toggle('focus',on);w.classList.remove('pt','pl');$('#focusBtn').classList.toggle('on',on);
+  if(on)toast(`Focus mode. Point at the top or left edge to see the browser. ${keyOf('focus')} to leave.`,'Leave',toggleFocus);else hideToast()}
+function unpeek(cls,keepSel){return e=>{const to=e.relatedTarget;if(to&&to.closest&&to.closest(keepSel))return;if($('#omni').classList.contains('open')||$('#menu').classList.contains('show')||$('#dlg').classList.contains('show'))return;$('#win').classList.remove(cls)}}
+
+/* ---------- Side panel ---------- */
+const PANELS_DEF=[{id:'notes',name:'Notes'},{id:'reading',name:'Reading list'},{id:'history',name:'History'},{id:'downloads',name:'Downloads'},{id:'web:app.slack.com',name:'Slack',host:'app.slack.com',fh:'slack.com'}];
+let panels=store.get('panels',PANELS_DEF);const savePanels=()=>store.set('panels',panels);
+const PIC={notes:IC.note,reading:IC.list,history:IC.clock,downloads:IC.dl};
+let notes=store.get('notes',[{q:'Tabs that are playing audio, using the camera or microphone, or shown in picture-in-picture are never unloaded.',text:'Same rule as our Keep loaded switch. Check BRW-290.',h:'firefox-source-docs.mozilla.org',src:'firefox-source-docs.mozilla.org/browser/components/tabbrowser/docs/tab-unloading.html'}]);
+const saveNotes=()=>store.set('notes',notes);
+let reading=store.get('reading',[{title:'Why familiar interfaces win',host:'www.nngroup.com',path:'/articles/familiar-ui/'},{title:'Choosing a Firefox update channel',host:'support.mozilla.org',path:'/kb/choosing-firefox-update-channel'},{title:'Designing keyboard-first interfaces',host:'www.smashingmagazine.com',path:'/2026/06/keyboard-first/'}]);
+function togglePanel(id,force){if(id)S.panel=(S.panel===id&&!force)?null:id;else S.panel=S.panel?null:(store.get('lastPanel',null)||panels[0]?.id||null);
+  if(S.panel&&!panels.some(p=>p.id===S.panel))S.panel=panels[0]?.id||null;if(S.panel)store.set('lastPanel',S.panel);store.set('panel',S.panel);closeAll();renderPanel()}
+function renderPanel(){const w=$('#win'),el=$('#spanel');const p=panels.find(x=>x.id===S.panel);if(!p)S.panel=null;
+  w.classList.toggle('haspanel',!!p);$('#panelBtn').classList.toggle('on',!!p);$('#dlBtn').classList.toggle('on',S.panel==='downloads');if(!p){el.innerHTML='';return}
+  el.innerHTML=`<div class="sph">${panels.map(x=>`<button class="btn${x.id===p.id?' on':''}" data-act="panel" data-p="${x.id}" data-force="1" title="${esc(x.name)}" aria-label="${esc(x.name)}">${x.host?fav({host:x.host,fh:x.fh}):PIC[x.id]}</button>`).join('')}<button class="btn" data-act="addpanel" title="Add a web panel" aria-label="Add a web panel">${IC.plus}</button><span class="sp"></span><button class="btn" data-act="panel-close" title="Close side panel" aria-label="Close side panel">${IC.x}</button></div>`+panelBody(p)}
+function panelBody(p){
+  if(p.id==='notes')return `<div class="spb"><div class="spbar">Notes<button class="pill" data-act="newnote">New note</button></div>${notes.length?notes.map((n,i)=>`<div class="note">${n.q?`<q>${esc(n.q)}</q>`:''}<textarea data-note="${i}" placeholder="Write a note…" rows="2" aria-label="Note">${esc(n.text||'')}</textarea>${n.h?`<div class="src">${fav({host:n.h})}<span>${esc(n.src||n.h)}</span></div>`:''}<button class="mini" data-act="delnote" data-i="${i}" title="Delete note" aria-label="Delete note">${IC.trash}</button></div>`).join(''):`<div class="empty">Select text on any page and choose <b>Add to notes</b>, or start a new note.</div>`}</div>`;
+  if(p.id==='reading')return `<div class="spb"><div class="spbar">Reading list<button class="pill" data-act="addread">Add this page</button></div>${reading.map((r,i)=>`<button class="pl" data-act="openurl" data-r="${i}">${fav(r)}<span class="t"><div>${esc(r.title)}</div><small>${esc(r.host.replace(/^www\./,''))}</small></span></button>`).join('')||'<div class="empty">Nothing saved to read yet.</div>'}</div>`;
+  if(p.id==='history'){const rows=contexts.flatMap(c=>all(c.id)).filter(t=>t.host).slice(0,14);return `<div class="spb"><div class="spbar">Today</div>${rows.map((t,i)=>`<button class="pl" data-act="goto" data-t="${t.id}">${fav(t)}<span class="t"><div>${esc(t.title)}</div><small>${5+i*7} min ago · ${esc(t.host.replace(/^www\./,''))}</small></span></button>`).join('')}</div>`}
+  if(p.id==='downloads')return `<div class="spb"><div class="spbar">Downloads<button class="pill">Open folder</button></div>${[['meridian-2.4.0-rc1-win64.msi','142 MB · Done'],['MFSA-2026-58.pdf','312 KB · Done'],['contexts-policy-templates.zip','48 KB · Done']].map(([n,s])=>`<div class="pl">${sm(IC.file)}<span class="t"><div>${n}</div><small>${s}</small></span></div>`).join('')}</div>`;
+  return `<div class="spb web">${p.host==='app.slack.com'?chatPage():page({title:p.name,host:p.host,path:'/',kind:'doc'})}</div>`}
+function chatPage(){return `<div class="w chat"><h4># release-2-4</h4>${[['Priya Raman','10:40','Go/no-go moved to 16:00. Blockers are BRW-301 and BRW-305.'],['Daniel Ortiz','10:44','BRW-305 is in review now.'],['GitHub','10:15','build-windows passed on release/2.4 (38m 12s).'],['Lena Hoffmann','10:51','Compact redlines are in Figma. 28 px rows.']].map(([n,t,m])=>`<div class="cm"><b>${n}</b><span>${t}</span><div>${m}</div></div>`).join('')}</div>`}
+function addPanelDialog(){showDialog(`<h2>Add a web panel</h2><p>The site opens inside the side panel, next to your tabs.</p><input class="tx" id="wpIn" placeholder="Site address, for example web.whatsapp.com" aria-label="Site address">
+  <div style="display:flex;gap:6px;flex-wrap:wrap">${[['Spotify','open.spotify.com'],['WhatsApp','web.whatsapp.com'],['Calendar','calendar.google.com'],['Todoist','app.todoist.com']].map(([n,h])=>`<button class="pill" data-act="wp-pick" data-h="${h}">${n}</button>`).join('')}</div>
+  <div class="actions"><button class="b2" data-act="dlg-close">Cancel</button><button class="b2 fill" data-act="addpanel-ok">Add</button></div>`)}
+function addPanelOk(){const host=$('#wpIn').value.trim().replace(/^https?:\/\//i,'').split('/')[0].toLowerCase();
+  if(!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(host)){toast('Type a site address such as web.whatsapp.com');return}
+  const id='web:'+host;if(!panels.some(p=>p.id===id)){const KN={'open.spotify.com':'Spotify','web.whatsapp.com':'WhatsApp','calendar.google.com':'Calendar','app.todoist.com':'Todoist'};
+    panels.push({id,name:KN[host]||host.split('.').filter(x=>!['www','app','web','open'].includes(x))[0].replace(/^./,c=>c.toUpperCase()),host});savePanels()}
+  closeAll();togglePanel(id,true);refreshSettings()}
+function removePanel(id){const i=panels.findIndex(p=>p.id===id);if(i<0)return;const [p]=panels.splice(i,1);savePanels();closeAll();if(S.panel===id){S.panel=null;store.set('panel',null)}renderPanel();refreshSettings();
+  toast(`Removed ${p.name} from the side panel`,'Undo',()=>{panels.splice(i,0,p);savePanels();renderPanel();refreshSettings()})}
+
+/* Select text → Add to notes (Beam / Arc Easel) */
+let clipText='',clipSrc=null;
+document.addEventListener('mouseup',e=>{if(e.target.closest&&e.target.closest('#clip'))return;setTimeout(()=>{const s=getSelection(),c=$('#clip');const v=e.target.closest&&e.target.closest('.content .view,.glance .view');const txt=s&&!s.isCollapsed?s.toString().trim():'';
+  if(!v||txt.length<3){c.classList.remove('show');return}const r=s.getRangeAt(0).getBoundingClientRect();clipText=txt.slice(0,600);const pn=v.closest('.pane');
+  clipSrc=pn?find(S.split?S.split[+pn.dataset.pane]:S.active)?.t:(gT?{host:new URL(gT.href).host,path:new URL(gT.href).pathname}:null);
+  c.style.left=Math.max(6,Math.min(innerWidth-150,r.left+r.width/2-60))+'px';c.style.top=(r.top>60?r.top-38:r.bottom+8)+'px';c.classList.add('show')},0)});
+document.addEventListener('scroll',()=>$('#clip').classList.remove('show'),true);
+
+/* Link hints (Vieb / qutebrowser follow mode) */
+let hintMode=null;
+function startHints(){closeAll();const links=$$('.content .view a[data-href]').filter(a=>{const r=a.getBoundingClientRect();return r.width&&r.bottom>0&&r.top<innerHeight});
+  if(!links.length){toast('There are no links on this part of the page');return}
+  const L='asdfghjkl',two=links.length>L.length;hintMode={typed:'',items:links.map((a,i)=>{const label=two?L[Math.floor(i/L.length)]+L[i%L.length]:L[i];const r=a.getBoundingClientRect();const el=document.createElement('div');el.className='hint';el.textContent=label;el.style.left=r.left+'px';el.style.top=Math.max(0,r.top-4)+'px';document.body.appendChild(el);return{a,label,el}})};
+  toast('Type the letters next to a link. Hold Shift to open it in a new tab. Esc cancels.')}
+function hintKey(e){if(['Shift','Control','Alt'].includes(e.key))return;e.preventDefault();if(e.key==='Escape'){endHints();return}
+  if(e.key==='Backspace')hintMode.typed=hintMode.typed.slice(0,-1);else if(/^[a-z]$/i.test(e.key))hintMode.typed+=e.key.toLowerCase();else return;
+  const ty=hintMode.typed,m=hintMode.items.filter(h=>h.label.startsWith(ty));hintMode.items.forEach(h=>{const ok=m.includes(h);h.el.style.display=ok?'':'none';if(ok)h.el.innerHTML=`<span class="m">${ty}</span>${h.label.slice(ty.length)}`});
+  if(m.length===1&&m[0].label===ty){const a=m[0].a,sh=e.shiftKey;endHints();if(sh){const u=new URL(a.dataset.href);open(T(a.dataset.title,u.host,u.pathname,'doc'));toast(`Opened “${a.dataset.title}” in a new tab`)}else glance(a)}
+  else if(!m.length)endHints()}
+function endHints(){if(!hintMode)return;hintMode.items.forEach(h=>h.el.remove());hintMode=null;hideToast()}
+
+/* Screenshot */
+let shot0=null;
+function startShot(){closeAll();const o=$('#shot'),r=$('#content').getBoundingClientRect();Object.assign(o.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});o.classList.remove('drag');o.querySelector('.sel').style.display='none';o.classList.add('show')}
+function endShot(kind){$('#shot').classList.remove('show');shot0=null;if(!kind)return;$('#content').animate([{filter:'brightness(1.5)'},{filter:'none'}],{duration:260});toast(`Screenshot of the ${kind} copied to the clipboard`,'Save…',()=>toast('Saved to Pictures › Screenshots'))}
+$('#shot').addEventListener('mousedown',e=>{if(e.target.closest('.shbar'))return;const o=$('#shot').getBoundingClientRect();shot0={x:e.clientX-o.left,y:e.clientY-o.top,o};e.preventDefault()});
+document.addEventListener('mousemove',e=>{if(!shot0)return;const{o,x,y}=shot0,cx=Math.max(0,Math.min(o.width,e.clientX-o.left)),cy=Math.max(0,Math.min(o.height,e.clientY-o.top));$('#shot').classList.add('drag');Object.assign($('#shot .sel').style,{display:'block',left:Math.min(x,cx)+'px',top:Math.min(y,cy)+'px',width:Math.abs(cx-x)+'px',height:Math.abs(cy-y)+'px'})});
+document.addEventListener('mouseup',()=>{if(!shot0)return;const s=$('#shot .sel'),w=s.offsetWidth,h=s.offsetHeight;shot0=null;if(s.style.display!=='none'&&w>8&&h>8)endShot(`selected area (${w} × ${h})`);else{$('#shot').classList.remove('drag');s.style.display='none'}});
+
+/* ---------- First-run setup (Vivaldi / DuckDuckGo: real choices with live preview; never Opera's hidden defaults) ---------- */
+let setupStep=0;const setupData={imp:'chrome',def:false};
+const IMPORTS=[['chrome','Google Chrome','Bookmarks, history, passwords and open tabs'],['edge','Microsoft Edge','Bookmarks, history, passwords and collections'],['firefox','Firefox','Bookmarks, history, passwords and extensions'],['arc','Arc','Spaces become Contexts. Pinned tabs stay pinned.'],['none','Start fresh','You can import later from Settings']];
+function setup(step=0){setupStep=step;const L=store.get('layout','vertical');
+  const body=[
+   ()=>`<h2>Welcome to Meridian</h2><p>Four quick choices. You can change each one later in Settings.</p><div style="font-weight:600;margin:4px 0 2px">Theme</div>${themeTiles(store.get('theme','system'))}`,
+   ()=>`<h2>Where should tabs go?</h2><p>Try both. The window behind this box changes as you pick.</p>${[['vertical','Side','A list on the left. Easier with many tabs.'],['horizontal','Top','A row across the top, like most browsers.']].map(([v,n,s])=>`<button class="choice${L===v?' on':''}" data-layout="${v}"><span class="r"></span><span><b>${n}</b><small>${s}</small></span></button>`).join('')}<div class="srow" style="padding:12px 12px 0;min-height:0"><div class="g">Density</div>${segH('density',store.get('density','normal'),[['normal','Normal'],['compact','Compact']])}</div>`,
+   ()=>`<h2>Bring your things</h2><p>Meridian found these browsers on this PC.</p>${IMPORTS.map(([v,n,s])=>`<button class="choice${setupData.imp===v?' on':''}" data-imp="${v}"><span class="r"></span><span><b>${n}</b><small>${s}</small></span></button>`).join('')}`,
+   ()=>`<h2>You're set</h2><p>Four things worth knowing:</p><div class="tips"><div><kbd>${keyOf('palette')}</kbd>Search tabs, commands and the web from the address bar</div><div><kbd>Right-click a tab</kbd>Group it, snooze it or open it in split view</div><div><kbd>${keyOf('focus')}</kbd>Focus mode hides everything except the page</div><div><kbd>Select text</kbd>Add it to Notes in the side panel</div></div><div class="card"><div class="srow"><div class="g">Make Meridian the default browser<small>Meridian won't ask about this again.</small></div>${swH('def',setupData.def,'Make default')}</div></div>`][step]();
+  showDialog(body+`<div class="actions"><span class="steps">${[0,1,2,3].map(i=>`<i class="${i===step?'on':''}"></i>`).join('')}</span>${step<3?'<button class="b2" data-act="setup-skip">Skip</button>':''}${step?'<button class="b2" data-act="setup-back">Back</button>':''}<button class="b2 fill" data-act="${step<3?'setup-next':'setup-done'}">${step<3?'Next':'Start browsing'}</button></div>`,'wide setup')}
+function setupDone(){closeAll();store.set('setup2',true);const imp=IMPORTS.find(x=>x[0]===setupData.imp),msg=[];
+  if(imp&&imp[0]!=='none')msg.push(`Importing from ${imp[1]}…`);if(setupData.def)msg.push('Windows will ask you to confirm the default browser.');if(msg.length)toast(msg.join(' '))}
+
+/* ---------- Glance ---------- */
+let gT=null;
+function glance(a){closeAll();gT={href:a.dataset.href,title:a.dataset.title};$('#gUrl').textContent=gT.href.replace('https://','');const u=new URL(gT.href);$('#gView').innerHTML=page({title:gT.title,host:u.host,kind:'doc'});$('#glance').classList.add('show');$('#veil').className='veil show dim'}
+function glanceOpen(split){const u=new URL(gT.href);const prev=shown();const t=open(T(gT.title,u.host,u.pathname,'doc'));closeAll();if(split){S.split=[prev,t.id];S.focus=1;render()}}
+
+
+/* ---------- New tab page ---------- */
+function sunArc(now){const h=now.getHours()+now.getMinutes()/60,f=(h-6)/12,day=f>=0&&f<=1;
+  const pt=f=>{const a=Math.PI*(1-f);return[100+90*Math.cos(a),56-48*Math.sin(a)]};const[x,y]=pt(Math.min(1,Math.max(0,f)));
+  const tip=day?(h<12?`Midday in ${Math.floor(12-h)} h ${Math.round((12-h)%1*60)} min`:h<12.1?'Midday':'Past midday'):'The sun is down';
+  return `<svg class="sun" viewBox="0 0 200 64" role="img" aria-label="${tip}"><title>${tip}. A meridian is the line the sun crosses at midday.</title>
+   <path class="hz" d="M0 56.5h200"/><path class="trk" d="M10 56A90 48 0 0 1 190 56"/>${day?`<path class="done" d="M10 56A90 48 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}"/>`:''}
+   <path class="hz" d="M100 4v3"/><text x="100" y="-2" text-anchor="middle">NOON</text>
+   ${day?`<circle class="orb" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"/>`:`<path class="moon" d="M104 14a8 8 0 1 1-8-10a6 6 0 0 0 8 10z"/>`}</svg>`}
+const SITE_NAMES={'outlook.office.com':'Outlook','calendar.google.com':'Calendar','slack.com':'Slack','app.slack.com':'Slack','linear.app':'Linear','github.com':'GitHub','www.notion.so':'Notion','www.figma.com':'Figma','developer.mozilla.org':'MDN','en.wikipedia.org':'Wikipedia','firefox-source-docs.mozilla.org':'Firefox docs','browserbench.org':'BrowserBench','news.ycombinator.com':'Hacker News','www.youtube.com':'YouTube','open.spotify.com':'Spotify','kagi.com':'Kagi'};
+const siteName=h=>SITE_NAMES[h]||h.replace(/^(www|app|open|docs|en|forum)\./,'').split('.')[0].replace(/^./,c=>c.toUpperCase());
+function globe(){let g='<circle cx="700" cy="860" r="680"/><path d="M700 180v1360"/>';for(const k of[15,30,45,60,75])g+=`<ellipse cx="700" cy="860" rx="${(680*Math.cos(k*Math.PI/180)).toFixed(0)}" ry="680"/>`;
+  for(const k of[20,40,60])g+=`<ellipse cx="700" cy="${(860-680*Math.sin(k*Math.PI/180)).toFixed(0)}" rx="${(680*Math.cos(k*Math.PI/180)).toFixed(0)}" ry="${(80*Math.cos(k*Math.PI/180)).toFixed(0)}"/>`;
+  return `<svg class="globe" viewBox="0 0 1400 860" aria-hidden="true">${g}</svg>`}
+function newTabPage(){const now=new Date(),h=now.getHours(),c=cur(),greet=store.get('ntpgreet',true);
+  const hello=h<5?'Up late':h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const date=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const seen=new Set(),tiles=all(S.ctx).filter(x=>{const k=x.fh||x.host;if(!x.host||['new','settings'].includes(x.kind)||seen.has(k))return false;seen.add(k);return true}).slice(0,6);
+  const bd=bdResolve();
+  return `<div class="ipage ntp${bd.tone?' bd-'+bd.tone:''}"${bd.css?` style='background:${bd.css}'`:''}>${bd.id==='lines'?globe():''}<div class="box">
+   ${greet?`${sunArc(now)}<h1>${hello}</h1><div class="sub">${esc(date)}<span>·</span><i style="background:${c.color}"></i>${esc(c.name)}</div>`:''}
+   <div class="s" data-act="omni">${IC.search}Search or type a URL<kbd>${keyOf('palette')}</kbd></div>
+   <div class="tiles">${tiles.map(x=>`<button class="tile" data-act="goto" data-t="${x.id}" title="${esc(x.title)}"><span class="c">${fav(x)}</span>${esc(siteName(x.fh||x.host))}</button>`).join('')}</div>
+  </div><button class="bdbtn" data-act="bd-menu" title="Change backdrop" aria-label="Change backdrop">${SV('<rect x="3.5" y="4.5" width="13" height="11" rx="2"/><path d="M3.5 13l3.5-3.5 3 3 2-2 4 4"/><circle cx="13" cy="8" r="1.2"/>')}</button></div>`}
+
+
+/* ---------- New tab backdrop ---------- */
+const BD=[
+ {id:'none',name:'None',css:'',sw:'var(--page)'},
+ {id:'lines',name:'Meridians',css:'',sw:'radial-gradient(circle at 50% 150%,transparent 44%,var(--text-3) 45%,transparent 46%,transparent 62%,var(--text-3) 63%,transparent 64%),var(--page)'},
+ {id:'sun',name:'Follow the sun',css:'',sw:'linear-gradient(90deg,#f6c9b8,#cfe6fb 35%,#7a4a7e 70%,#0d1022)'},
+ {id:'dawn',name:'Dawn',tone:'light',css:'linear-gradient(165deg,#fbe6d6 0%,#f5cbbb 45%,#cdb9e6 100%)'},
+ {id:'noon',name:'Noon',tone:'light',css:'linear-gradient(180deg,#cde5fb 0%,#eaf4fd 60%,#f7fafc 100%)'},
+ {id:'dusk',name:'Dusk',tone:'dark',css:'linear-gradient(175deg,#272c58 0%,#6d467a 55%,#d9826a 100%)'},
+ {id:'night',name:'Night',tone:'dark',css:'radial-gradient(ellipse at 50% 125%,#2a3768 0%,#121633 55%,#0a0c1c 100%)'},
+ {id:'sand',name:'Sand',tone:'light',css:'#ebe4d6'},
+ {id:'slate',name:'Slate',tone:'dark',css:'#2e3338'},
+];
+function bdResolve(){let id=store.get('backdrop','none');
+  if(id==='sun'){const h=new Date().getHours();id=h>=5&&h<10?'dawn':h<17&&h>=10?'noon':h>=17&&h<20?'dusk':'night'}
+  if(id==='custom'){const img=localStorage.getItem('meridian3.bdimg');return img?{id,tone:'dark',css:`linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.3)),url("${img}") center/cover no-repeat`}:BD[0]}
+  return BD.find(b=>b.id===id)||BD[0]}
+function bdGrid(){const cur=store.get('backdrop','none'),img=localStorage.getItem('meridian3.bdimg');
+  const list=[...BD.map(b=>({...b,sw:b.sw||b.css})),...(img?[{id:'custom',name:'Your image',sw:`url("${img}")`}]:[])];
+  return `<div class="bdgrid">${list.map(b=>`<button class="bdsw${b.id===cur?' on':''}" data-act="bd" data-bd="${b.id}" aria-label="${b.name} backdrop"><i style='background:${b.sw};background-size:cover;background-position:center'></i>${b.name}</button>`).join('')}</div>`}
+function bdMenu(anchor){showMenu(`<div class="head">Backdrop</div>${bdGrid()}${SEP}${mi('Upload an image…','','data-act="bd-upload"')}${localStorage.getItem('meridian3.bdimg')?mi('Remove your image','','data-act="bd-clear"'):''}`,anchor,true);$('#menu').style.minWidth='330px'}
+function setBackdrop(id,el){store.set('backdrop',id);const inMenu=el&&el.closest('#menu');renderContent();renderUrl();if(inMenu)bdMenu($('.ntp .bdbtn')||$('#menuBtn'))}
+function bdUpload(file){if(!file||!file.type.startsWith('image/')){toast('Choose an image file');return}
+  const img=new Image(),url=URL.createObjectURL(file);
+  img.onload=()=>{const k=Math.min(1,1920/img.width),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+    let q=.85,d=c.toDataURL('image/jpeg',q);while(d.length>3.2e6&&q>.4){q-=.15;d=c.toDataURL('image/jpeg',q)}
+    try{localStorage.setItem('meridian3.bdimg',d)}catch{toast('That image is too large to keep. Try a smaller one.');return}
+    store.set('backdrop','custom');closeAll();renderContent();toast('Backdrop updated. It stays on this device.')};
+  img.onerror=()=>{URL.revokeObjectURL(url);toast('That image could not be opened')};img.src=url}
+
+/* ---------- Click actions ---------- */
+const cur1=()=>find(menuTab)?.t;
+const UI={
+ tabsearch:()=>openOmni('@'),omni:()=>openOmni(),'bd-menu':el=>bdMenu(el),bd:el=>setBackdrop(el.dataset.bd,el),'bd-upload':()=>{closeAll();$('#bdFile').click()},'bd-clear':()=>{localStorage.removeItem('meridian3.bdimg');if(store.get('backdrop')==='custom')store.set('backdrop','none');closeAll();renderContent();refreshSettings()},shot:()=>startShot(),forget:()=>forgetDialog(),focus:()=>toggleFocus(),hints:()=>startHints(),tasks:()=>taskManager(),tweaks:()=>tweakDialog(),tidy:()=>tidyTabs(),
+ saved:()=>savedMenu(),notes:()=>togglePanel('notes',true),toolbar:()=>{closeAll();openSettings('toolbar')},
+ 'panel-toggle':()=>togglePanel(),panel:el=>togglePanel(el.dataset.p,!!el.dataset.force),'panel-close':()=>{S.panel=null;store.set('panel',null);renderPanel()},
+ 'menu-more':()=>mainMenu('more'),'menu-main':()=>mainMenu(),
+ 'tab-sub':el=>tabMenu(menuTab,null,el.dataset.sub),
+ 'tab-group-new':()=>{const t=cur1();askName('New group','',GCOL[data[S.ctx].groups.length%GCOL.length],(n,c)=>{detach(t);data[S.ctx].groups.push({name:n,color:c,open:true,tabs:[t]});render()})},
+ 'tab-group':el=>{const d=data[S.ctx],g=d.groups[+el.dataset.g],t=cur1();closeAll();detach(t);g.tabs.push(t);if(!d.groups.includes(g))d.groups.push(g);g.open=true;render()},
+ 'tab-ungroup':()=>{const t=cur1();closeAll();detach(t);data[S.ctx].tabs.unshift(t);render()},
+ 'tab-split':()=>{closeAll();const b=shown();if(b===menuTab)return;S.split=[b,menuTab];S.focus=1;cur1().zz=false;render()},
+ 'tab-pin':()=>{const d=data[S.ctx],t=cur1(),p=d.pins.includes(t);closeAll();detach(t);p?d.tabs.unshift(t):d.pins.push(t);render()},
+ 'tab-snooze':el=>{const t=cur1(),s=SNOOZE[+el.dataset.s],c=S.ctx;closeAll();detach(t);data[c].snoozed.push({t,until:s[2]});fixActive();render();
+   toast(`Snoozed until ${s[2]}`,'Undo',()=>{data[c].snoozed=data[c].snoozed.filter(x=>x.t!==t);data[c].tabs.push(t);activate(t.id)})},
+ 'tab-move':el=>{closeAll();moveTabTo(menuTab,el.dataset.c,false)},
+ 'tab-dup':()=>{const t=cur1();closeAll();open(T(t.title,t.host,t.path,t.kind,{fh:t.fh,icon:t.icon}))},
+ 'tab-unload':()=>{closeAll();cur1().zz=true;render()},
+ 'tab-close':()=>{closeAll();closeTab(menuTab)},
+ 'tab-close-others':()=>{closeAll();const d=data[S.ctx];[...d.tabs,...d.groups.flatMap(g=>g.tabs)].forEach(t=>{if(t.id!==menuTab){const p=detach(t);closed.push({t,...p})}});S.active=menuTab;S.split=null;render()},
+ 'g-newtab':()=>{const g=data[S.ctx].groups[menuG];closeAll();const t=T('New tab','','','new',{icon:IC.plus});g.tabs.push(t);g.open=true;S.split=null;S.active=t.id;render();openOmni()},
+ 'g-rename':()=>{const g=data[S.ctx].groups[menuG];askName('Rename group',g.name,g.color,(n,c)=>{g.name=n;g.color=c;render()})},
+ 'g-color':el=>{data[S.ctx].groups[menuG].color=el.dataset.c;render();groupMenu(menuG)},
+ 'g-save':()=>{const d=data[S.ctx],gi=menuG,g=d.groups[gi];closeAll();d.groups.splice(gi,1);const s={name:g.name,color:g.color,tabs:g.tabs};d.saved.unshift(s);fixActive();render();
+   toast(`Saved “${g.name}” for later`,'Undo',()=>{d.saved=d.saved.filter(x=>x!==s);d.groups.splice(gi,0,g);render()})},
+ 'g-ungroup':()=>{const d=data[S.ctx],g=d.groups[menuG];closeAll();d.groups.splice(menuG,1);d.tabs.unshift(...g.tabs);render()},
+ 'g-close':()=>{const d=data[S.ctx],g=d.groups[menuG];closeAll();d.groups.splice(menuG,1);g.tabs.forEach(t=>closed.push({t,c:S.ctx}));fixActive();render()},
+ restore:el=>{const d=data[S.ctx],[g]=d.saved.splice(+el.dataset.i,1);closeAll();d.groups.push({name:g.name,color:g.color,open:true,tabs:g.tabs});S.split=null;S.active=g.tabs[0].id;render();toast(`Opened “${g.name}”`)},
+ wake:el=>{const d=data[S.ctx],[s]=d.snoozed.splice(+el.dataset.i,1);closeAll();d.tabs.push(s.t);activate(s.t.id)},
+ 'pick-color':el=>{pickC=el.dataset.c;$$('#dlg .dots button').forEach(b=>b.classList.toggle('on',b===el))},
+ 'name-ok':()=>{const v=$('#nameIn').value.trim()||'Group',cb=nameCb;closeAll();cb&&cb(v,pickC)},
+ 'dlg-close':()=>closeAll(),'forget-go':()=>forgetGo(),
+ 'tw-reset':()=>{const t=find(shown()).t;delete tweaks[t.host];store.set('tweaks',tweaks);renderContent();renderUrl();tweakDialog()},
+ 'tm-unload':el=>{find(+el.dataset.t).t.zz=true;render();taskManager()},
+ 'tm-unload-all':()=>{const live=[shown(),...(S.split||[])];contexts.forEach(c=>all(c.id).forEach(t=>{if(!live.includes(t.id)&&!t.audio&&!['settings','new'].includes(t.kind))t.zz=true}));render();taskManager()},
+ setup:()=>setup(0),'setup-import':()=>setup(2),'setup-next':()=>setup(setupStep+1),'setup-back':()=>setup(setupStep-1),'setup-skip':()=>{setupData.imp='none';setupDone()},'setup-done':()=>setupDone(),
+ 'make-default':()=>toast('Windows Default apps would open here so you can choose. Meridian never changes this by itself.'),
+ sec:el=>{S.setSec=el.dataset.s;S.setQ='';refreshSettings()},'sec-open':el=>{closeAll();openSettings(el.dataset.s)},
+ rec:el=>{S.rec=el.dataset.k;el.textContent='Press a shortcut…';el.classList.add('rec')},
+ 'keys-reset':()=>{KEYS=defKeys();store.set('keys',{});applyToolbar();refreshSettings();toast('All shortcuts are back to their defaults')},
+ addpanel:()=>addPanelDialog(),'addpanel-ok':()=>addPanelOk(),'wp-pick':el=>{$('#wpIn').value=el.dataset.h;$('#wpIn').focus()},'panel-remove':el=>removePanel(el.dataset.p),
+ newnote:()=>{notes.unshift({text:''});saveNotes();renderPanel();$('#spanel textarea')?.focus()},
+ delnote:el=>{const i=+el.dataset.i,[n]=notes.splice(i,1);saveNotes();renderPanel();toast('Note deleted','Undo',()=>{notes.splice(i,0,n);saveNotes();renderPanel()})},
+ addread:()=>{const t=find(shown())?.t;if(!t||!t.host){toast('Open a website to add it');return}if(!reading.some(r=>r.host===t.host&&r.path===t.path)){reading.unshift({title:t.title,host:t.host,path:t.path});store.set('reading',reading)}renderPanel();toast('Added to your reading list')},
+ openurl:el=>{const r=reading[+el.dataset.r];open(T(r.title,r.host,r.path,'doc'))},
+ goto:el=>activate(+el.dataset.t),
+ clip:()=>{notes.unshift({q:clipText,text:'',h:clipSrc?.host,src:clipSrc?clipSrc.host.replace(/^www\./,'')+(clipSrc.path||''):''});saveNotes();$('#clip').classList.remove('show');getSelection().removeAllRanges();
+   if(S.panel==='notes'){renderPanel();toast('Added to notes')}else toast('Added to notes','Show',()=>togglePanel('notes',true))},
+ 'toast-act':()=>{hideToast();const f=toastFn;toastFn=null;f&&f()},
+ 'shot-visible':()=>endShot('visible area'),'shot-full':()=>endShot('full page'),'shot-cancel':()=>endShot(),
+};
+
+/* ---------- Events ---------- */
+document.addEventListener('click',e=>{
+  if(S.rec&&!e.target.closest('[data-act="rec"]')){S.rec=null;refreshSettings();return}
+  const a=e.target.closest('.view a[data-href]');if(a&&!e.target.closest('#gView')&&!e.target.closest('#spanel')){glance(a);return}
+  const tp=e.target.closest('[data-theme-pick]');if(tp){setPref('theme',tp.dataset.themePick);return}
+  const ac=e.target.closest('[data-act]');if(ac&&UI[ac.dataset.act]){e.stopPropagation();UI[ac.dataset.act](ac,e);return}
+  const sw=e.target.closest('.sw');if(sw){const v=sw.getAttribute('aria-checked')!=='true';sw.setAttribute('aria-checked',v);if(sw.dataset.sw)onSwitch(sw.dataset.sw,v);return}
+  const el=e.target.closest('[data-close],[data-mute],[data-group],[data-ctx],[data-id],[data-unsplit],[data-new],[data-settings],[data-i],.choice,.seg button,.dots button');if(!el)return;
+  if(el.dataset.i!=null){const r=items[+el.dataset.i];closeAll();r&&r.run();return}
+  if(el.dataset.new){closeAll();newTab();return}
+  if(el.dataset.settings){closeAll();openSettings();return}
+  if(el.dataset.close){e.stopPropagation();closeTab(+el.dataset.close);return}
+  if(el.dataset.mute){find(el.dataset.mute).t.audio=false;render();return}
+  if(el.dataset.group!=null){const g=data[S.ctx].groups[el.dataset.group];g.open=!g.open;render();return}
+  if(el.dataset.ctx){if(e.target.closest('.ctx')&&el.dataset.ctx===S.ctx){ctxMenu(el);return}closeAll();switchCtx(el.dataset.ctx);return}
+  if(el.dataset.unsplit!=null){const k=S.split[1-el.dataset.unsplit];S.split=null;S.active=k;render();return}
+  if(el.classList.contains('choice')){el.parentElement.querySelectorAll('.choice').forEach(c=>c.classList.toggle('on',c===el));if(el.dataset.layout)setPref('layout',el.dataset.layout);if(el.dataset.imp)setupData.imp=el.dataset.imp;return}
+  if(el.matches('.seg button')){setPref(el.parentElement.dataset.pref,el.dataset.v);return}
+  if(el.matches('.dots button')){cur().color=el.dataset.color;render();return}
+  if(el.dataset.id){activate(+el.dataset.id)}
+});
+document.addEventListener('contextmenu',e=>{const pt={x:e.clientX,y:e.clientY};
+  const t=e.target.closest('.tab[data-id],.pin[data-id]');if(t&&!t.closest('#spanel')){e.preventDefault();tabMenu(+t.dataset.id,pt);return}
+  const g=e.target.closest('[data-group]');if(g){e.preventDefault();groupMenu(+g.dataset.group,pt);return}
+  const p=e.target.closest('.sph [data-p]');if(p){e.preventDefault();showMenu(mi('Remove from side panel','',`data-act="panel-remove" data-p="${p.dataset.p}"`),pt);return}
+  if(e.target.closest('.bar,.strip,.lead')&&!e.target.closest('.omni')){e.preventDefault();showMenu(mi('Customize toolbar…','','data-act="toolbar"')+mi('Keyboard shortcuts…','','data-act="sec-open" data-s="shortcuts"'),pt)}});
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.id==='setQ'){S.setQ=t.value;$('#setRes').innerHTML=setResults();renderUrl();$$('.set nav a').forEach(a=>a.classList.toggle('on',!S.setQ&&a.dataset.s===S.setSec));return}
+  if(t.dataset.note!=null){notes[+t.dataset.note].text=t.value;saveNotes()}});
+document.addEventListener('mouseover',e=>{const a=e.target.closest('.view a[data-href]');const s=$('#status');if(!s)return;s.textContent=a?a.dataset.href:'';s.classList.toggle('show',!!a)});
+$('#content').addEventListener('mousedown',e=>{const p=e.target.closest('.pane');if(p&&S.split&&S.focus!==+p.dataset.pane){S.focus=+p.dataset.pane;$$('.pane').forEach(x=>x.classList.toggle('focus',x===p));renderUrl()}});
+$('#veil').onclick=closeAll;
+$('#bdFile').addEventListener('change',e=>{bdUpload(e.target.files[0]);e.target.value=''});
+$('#field').addEventListener('click',e=>{if(e.target.closest('.btn'))return;if(!$('#omni').classList.contains('open'))openOmni()});
+$('#infoBtn').onclick=e=>{e.stopPropagation();infoMenu()};$('#splitBtn').onclick=e=>{e.stopPropagation();toggleSplit()};$('#starBtn').onclick=e=>{e.stopPropagation();$('#starBtn').classList.toggle('on')};
+$('#menuBtn').onclick=()=>mainMenu();$('#addH').onclick=newTab;$('#sideBtn').onclick=toggleSidebar;
+$('#gX').onclick=closeAll;$('#gTab').onclick=()=>glanceOpen(false);$('#gSplit').onclick=()=>glanceOpen(true);
+$('#hotT').addEventListener('mouseenter',()=>$('#win').classList.add('pt'));$('#hotL').addEventListener('mouseenter',()=>$('#win').classList.add('pl'));
+$('.bar').addEventListener('mouseleave',unpeek('pt','.bar,.strip,#hotT'));$('.strip').addEventListener('mouseleave',unpeek('pt','.bar,.strip,#hotT'));$('.side').addEventListener('mouseleave',unpeek('pl','.side,#hotL'));
+$('#q').addEventListener('input',()=>{sel=0;renderDrop()});
+$('#q').addEventListener('keydown',e=>{if(e.key==='ArrowDown'){sel=Math.min(sel+1,items.length-1);renderDropKeep();e.preventDefault()}else if(e.key==='ArrowUp'){sel=Math.max(sel-1,0);renderDropKeep();e.preventDefault()}else if(e.key==='Enter'){const r=items[sel];closeAll();r&&r.run()}});
+function renderDropKeep(){$$('#drop .row').forEach(r=>{const on=+r.dataset.i===sel;r.classList.toggle('sel',on);r.setAttribute('aria-selected',on)})}
+document.addEventListener('keydown',e=>{
+  if(hintMode){hintKey(e);return}
+  if(S.rec){recKey(e);return}
+  if(e.key==='Enter'&&e.target.matches&&e.target.matches('.dialog input.tx')){e.preventDefault();$('#dlg .b2.fill')?.click();return}
+  const c=combo(e),typing=e.target.closest&&e.target.closest('input,textarea,select,[contenteditable]');
+  if(c){const id=Object.keys(KEYS).find(k=>KEYS[k]===c);if(id&&(!typing||/Ctrl\+|Alt\+/.test(c)||/^(Shift\+)?(F\d+|Esc)$/.test(c))){e.preventDefault();ACT[id][2]();return}}
+  const k=e.key.toLowerCase();
+  if(e.key==='Escape'){if($('#shot').classList.contains('show')){endShot();return}closeAll();return}
+  if(e.ctrlKey&&k==='l'){e.preventDefault();openOmni();return}
+  if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&/^[1-4]$/.test(e.key)){e.preventDefault();switchCtx(contexts[+e.key-1].id);return}
+  if(document.activeElement?.classList.contains('tab')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();activate(+document.activeElement.dataset.id)}});
+
+setPref('layout',store.get('layout','vertical'));setPref('density',store.get('density','normal'));setPref('theme',store.get('theme','system'));setPref('tabwrap',store.get('tabwrap','scroll'));
+applyToolbar();fixActive();render();
+if(!store.get('setup2',false))setup(0);
+</script>
+
+</body>
+</html>
